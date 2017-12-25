@@ -1,48 +1,48 @@
 {
-  "name": "sitemap-generator",
-  "version": "7.5.2",
-  "description": "Easily create XML sitemaps for your website.",
-  "homepage": "https://github.com/lgraubner/sitemap-generator",
+  "_from": "git+https://github.com/hazemhagrass/sitemap-generator.git",
+  "_id": "sitemap-generator@7.5.2",
+  "_inBundle": false,
+  "_integrity": "sha1-B/5rBX/5PIpzpOQ478cyRXfGZ8g=",
+  "_location": "/sitemap-generator",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "sitemap-generator@git+https://github.com/hazemhagrass/sitemap-generator.git",
+    "name": "sitemap-generator",
+    "escapedName": "sitemap-generator",
+    "rawSpec": "git+https://github.com/hazemhagrass/sitemap-generator.git",
+    "saveSpec": "git+https://github.com/hazemhagrass/sitemap-generator.git",
+    "fetchSpec": "https://github.com/hazemhagrass/sitemap-generator.git",
+    "gitCommittish": "master"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git+https://github.com/hazemhagrass/sitemap-generator.git#0fdcb6abf507b90cf64f4580057edf845657c63b",
+  "_spec": "sitemap-generator@git+https://github.com/hazemhagrass/sitemap-generator.git",
+  "_where": "/Users/hazemhagrass/workspace/nodejs/edgylabs-gm",
   "author": {
     "name": "Lars Graubner",
     "email": "mail@larsgraubner.de",
     "url": "http://larsgraubner.de"
   },
-  "keywords": [
-    "sitemap",
-    "xml",
-    "sitemap.xml",
-    "generator",
-    "crawler",
-    "seo",
-    "google",
-    "ecosystem:node"
-  ],
-  "main": "lib/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/lgraubner/sitemap-generator.git"
-  },
   "bugs": {
     "url": "https://github.com/lgraubner/sitemap-generator/issues"
   },
+  "bundleDependencies": false,
   "dependencies": {
     "async": "2.6.0",
     "cheerio": "1.0.0-rc.2",
+    "cherio": "^1.0.0-rc.2",
     "cp-file": "5.0.0",
     "crypto-random-string": "1.0.0",
     "mitt": "1.1.2",
+    "request": "^2.83.0",
     "simplecrawler": "1.1.6",
     "url-parse": "1.2.0"
   },
-  "engines": {
-    "node": ">=6"
-  },
-  "license": "MIT",
-  "files": [
-    "lib",
-    "!**/__tests__"
-  ],
+  "deprecated": false,
+  "description": "Easily create XML sitemaps for your website.",
   "devDependencies": {
     "babel-eslint": "8.0.2",
     "eslint": "4.10.0",
@@ -56,16 +56,42 @@
     "lint-staged": "4.3.0",
     "prettier": "1.8.2"
   },
-  "scripts": {
-    "lint": "eslint lib",
-    "precommit": "lint-staged",
-    "test": "jest"
+  "engines": {
+    "node": ">=6"
   },
+  "files": [
+    "lib",
+    "!**/__tests__"
+  ],
+  "homepage": "https://github.com/lgraubner/sitemap-generator",
+  "keywords": [
+    "sitemap",
+    "xml",
+    "sitemap.xml",
+    "generator",
+    "crawler",
+    "seo",
+    "google",
+    "ecosystem:node"
+  ],
+  "license": "MIT",
   "lint-staged": {
     "*.js": [
       "eslint --fix",
       "prettier --single-quote --trailing-comma es5 --write",
       "git add"
     ]
-  }
+  },
+  "main": "lib/index.js",
+  "name": "sitemap-generator",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lgraubner/sitemap-generator.git"
+  },
+  "scripts": {
+    "lint": "eslint lib",
+    "precommit": "lint-staged",
+    "test": "jest"
+  },
+  "version": "7.5.2"
 }

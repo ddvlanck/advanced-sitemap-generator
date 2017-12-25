@@ -35,7 +35,8 @@ const SitemapGenerator = require('sitemap-generator');
 
 // create generator
 const generator = SitemapGenerator('http://example.com', {
-  stripQuerystring: false
+  stripQuerystring: false,
+  ignoreHreflang: true
 });
 
 // register event listeners
@@ -91,6 +92,7 @@ You can provide some options to alter the behaviour of the crawler.
 
 ```JavaScript
 var generator = SitemapGenerator('http://example.com', {
+  ignoreHreflang: true,
   crawlerMaxDepth: 0,
   filepath: path.join(process.cwd(), 'sitemap.xml'),
   maxEntriesPerFile: 50000,
@@ -153,6 +155,13 @@ Type: `boolean`
 Default: `true`
 
 Whether to treat URL's with query strings like `http://www.example.com/?foo=bar` as indiviual sites and add them to the sitemap.
+
+### ignoreHreflang
+
+Type: `boolean`  
+Default: `true`
+
+Whether to deep crawl every page searching for hreflang attributes to add alternative links to the generated sitemap or not.
 
 ### userAgent
 
