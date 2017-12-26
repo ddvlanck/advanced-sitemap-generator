@@ -34,6 +34,7 @@
     "async": "2.6.0",
     "cheerio": "1.0.0-rc.2",
     "cherio": "^1.0.0-rc.2",
+    "cld": "^2.4.7",
     "cp-file": "5.0.0",
     "crypto-random-string": "1.0.0",
     "mitt": "1.1.2",
