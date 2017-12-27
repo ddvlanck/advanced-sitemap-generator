@@ -2,7 +2,7 @@
   "_from": "git+https://github.com/hazemhagrass/sitemap-generator.git",
   "_id": "sitemap-generator@7.5.2",
   "_inBundle": false,
-  "_integrity": "sha1-tDsYxK2Jey76ObP+wq6f0vgNeDA=",
+  "_integrity": "sha1-oHP6XoIpY7IowmswblzB1UntAuQ=",
   "_location": "/sitemap-generator",
   "_phantomChildren": {
     "asynckit": "0.4.0",
@@ -43,7 +43,7 @@
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "git+https://github.com/hazemhagrass/sitemap-generator.git#5b0d9d008dd7fef5aacad4865c41fbbf158de588",
+  "_resolved": "git+https://github.com/hazemhagrass/sitemap-generator.git#c6d2ae9812b6955fb5cd404ff34178c43edac3d4",
   "_spec": "sitemap-generator@git+https://github.com/hazemhagrass/sitemap-generator.git",
   "_where": "/Users/hazemhagrass/workspace/nodejs/edgylabs-gm",
   "author": {
