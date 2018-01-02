@@ -78,6 +78,11 @@ Returns the status of the generator. Possible values are `waiting`, `started`, `
 
 Starts crawler asynchronously and writes sitemap to disk.
 
+### createSitemapFromURLs(urls)
+
+Generate sitemap xml files based on previous result URLs. This function is only calling addURL function to all urls.
+If ignoreHreflang attribute is set to false, then all URLs will be scrapped again to trace hreflangs
+
 ### stop()
 
 Stops the running crawler and halts the sitemap generation.
