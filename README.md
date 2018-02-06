@@ -101,7 +101,10 @@ var generator = SitemapGenerator('http://example.com', {
   crawlerMaxDepth: 0,
   filepath: path.join(process.cwd(), 'sitemap.xml'),
   maxEntriesPerFile: 50000,
-  stripQuerystring: true
+  stripQuerystring: true,
+  exclude: ['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'webm', 'mp3', 'ttf',
+    'woff', 'json', 'rss', 'atom', 'gz', 'zip', 'rar', '7z', 'css', 'js', 'gzip', 'exe', 'svg',
+    'xml']
 });
 ```
 
@@ -139,6 +142,15 @@ Type: `HTTPAgent`
 Default: `http.globalAgent`
 
 Controls what HTTP agent to use. This is useful if you want configure HTTP connection through a HTTP/HTTPS proxy (see [http-proxy-agent](https://www.npmjs.com/package/http-proxy-agent)).
+
+### exclude
+
+Type: `Array`  
+Default: `['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'webm', 'mp3', 'ttf',
+    'woff', 'json', 'rss', 'atom', 'gz', 'zip', 'rar', '7z', 'css', 'js', 'gzip', 'exe', 'svg',
+    'xml']`
+
+Exclude Specific files or extensions from being crawled and been added to sitemap
 
 ### httpsAgent
 
