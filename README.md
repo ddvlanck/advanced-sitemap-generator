@@ -104,7 +104,8 @@ var generator = SitemapGenerator('http://example.com', {
   stripQuerystring: true,
   exclude: ['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'webm', 'mp3', 'ttf',
     'woff', 'json', 'rss', 'atom', 'gz', 'zip', 'rar', '7z', 'css', 'js', 'gzip', 'exe', 'svg',
-    'xml']
+    'xml'],
+    excludeURLs: ['cxyz']
 });
 ```
 
@@ -151,6 +152,13 @@ Default: `['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'web
     'xml']`
 
 Exclude Specific files or extensions from being crawled and been added to sitemap
+
+### excludeURLs
+
+Type: `Array`  
+Default: `[]`
+
+Exclude Specific URLs' patterns from being crawled and been added to sitemap
 
 ### httpsAgent
 
