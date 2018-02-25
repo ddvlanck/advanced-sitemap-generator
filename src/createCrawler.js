@@ -19,6 +19,7 @@ module.exports = (uri, options = {}) => {
     'mp3',
     'ttf',
     'woff',
+    'woff2',
     'eot',
     'json',
     'rss',
