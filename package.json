@@ -1,6 +1,6 @@
 {
   "_from": "git+https://github.com/hazemhagrass/sitemap-generator.git",
-  "_id": "sitemap-generator@7.5.2",
+  "_id": "sitemap-generator@8.0.2",
   "_inBundle": false,
   "_integrity": "sha1-4fV7TkU2PBXL2RHPhFRxOIazqnM=",
   "_location": "/sitemap-generator",
@@ -52,7 +52,7 @@
     "url": "http://larsgraubner.de"
   },
   "bugs": {
-    "url": "https://github.com/lgraubner/sitemap-generator/issues"
+    "url": "https://github.com/hazemhagrass/sitemap-generator/issues"
   },
   "bundleDependencies": false,
   "dependencies": {
@@ -84,7 +84,7 @@
     "lib",
     "!**/__tests__"
   ],
-  "homepage": "https://github.com/lgraubner/sitemap-generator",
+  "homepage": "https://github.com/hazemhagrass/sitemap-generator",
   "keywords": [
     "sitemap",
     "xml",
@@ -107,12 +107,12 @@
   "name": "sitemap-generator",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lgraubner/sitemap-generator.git"
+    "url": "git+https://github.com/hazemhagrass/sitemap-generator.git"
   },
   "scripts": {
     "lint": "eslint lib",
     "precommit": "lint-staged",
     "test": "jest"
   },
-  "version": "7.5.2"
+  "version": "8.0.2"
 }
