@@ -1,55 +1,8 @@
 {
-  "_from": "git+https://github.com/hazemhagrass/sitemap-generator.git",
-  "_id": "sitemap-generator@8.0.2",
-  "_inBundle": false,
-  "_integrity": "sha1-4fV7TkU2PBXL2RHPhFRxOIazqnM=",
-  "_location": "/sitemap-generator",
-  "_phantomChildren": {
-    "asynckit": "0.4.0",
-    "aws4": "1.6.0",
-    "caseless": "0.12.0",
-    "co": "4.6.0",
-    "combined-stream": "1.0.5",
-    "decode-uri-component": "0.2.0",
-    "extend": "3.0.1",
-    "fast-deep-equal": "1.0.0",
-    "fast-json-stable-stringify": "2.0.0",
-    "forever-agent": "0.6.1",
-    "is-plain-obj": "1.1.0",
-    "is-typedarray": "1.0.0",
-    "isstream": "0.1.2",
-    "json-schema-traverse": "0.3.1",
-    "json-stringify-safe": "5.0.1",
-    "jsprim": "1.4.1",
-    "oauth-sign": "0.8.2",
-    "punycode": "1.4.1",
-    "safe-buffer": "5.1.1",
-    "sshpk": "1.13.1",
-    "strict-uri-encode": "1.1.0",
-    "stringstream": "0.0.5",
-    "tunnel-agent": "0.6.0",
-    "uuid": "3.1.0"
-  },
-  "_requested": {
-    "type": "git",
-    "raw": "sitemap-generator@git+https://github.com/hazemhagrass/sitemap-generator.git",
-    "name": "sitemap-generator",
-    "escapedName": "sitemap-generator",
-    "rawSpec": "git+https://github.com/hazemhagrass/sitemap-generator.git",
-    "saveSpec": "git+https://github.com/hazemhagrass/sitemap-generator.git",
-    "fetchSpec": "https://github.com/hazemhagrass/sitemap-generator.git",
-    "gitCommittish": "master"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "git+https://github.com/hazemhagrass/sitemap-generator.git#bfdf89c1cf6513d14a37ef762de4f902850904df",
-  "_spec": "sitemap-generator@git+https://github.com/hazemhagrass/sitemap-generator.git",
-  "_where": "/Users/hazemhagrass/workspace/nodejs/edgylabs-gm",
   "author": {
-    "name": "Lars Graubner",
-    "email": "mail@larsgraubner.de",
-    "url": "http://larsgraubner.de"
+    "name": "Hazem Hagrass",
+    "email": "me@hazemhagrass.com",
+    "url": "http://hazemhagrass.com"
   },
   "bugs": {
     "url": "https://github.com/hazemhagrass/sitemap-generator/issues"
