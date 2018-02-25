@@ -3,6 +3,7 @@ const rand = require('crypto-random-string');
 const os = require('os');
 const fs = require('fs');
 const escapeUnsafe = require('./helpers/escapeUnsafe');
+const getCurrentDateTime = require('./helpers/getCurrentDateTime');
 
 module.exports = function SitemapStream() {
   const tmpPath = path.join(os.tmpdir(), `sitemap_${rand(10)}`);
@@ -11,19 +12,18 @@ module.exports = function SitemapStream() {
 
   const getPath = () => tmpPath;
 
-<<<<<<< HEAD:lib/SitemapStream.js
   const getPiriorityFromDepth = depth => {
     let pir = 0.5;
     let zeroIndexedDepth = depth - 1;
-    if(zeroIndexedDepth === 0){
+    if (zeroIndexedDepth === 0) {
       pir = 1;
-    } else if(zeroIndexedDepth === 1){
+    } else if (zeroIndexedDepth === 1) {
       pir = 0.9;
-    } else if(zeroIndexedDepth === 2){
+    } else if (zeroIndexedDepth === 2) {
       pir = .8;
-    } else if(zeroIndexedDepth === 3){
+    } else if (zeroIndexedDepth === 3) {
       pir = .7;
-    } else if(zeroIndexedDepth === 4){
+    } else if (zeroIndexedDepth === 4) {
       pir = .6;
     }
     return pir;
@@ -43,7 +43,6 @@ module.exports = function SitemapStream() {
 
     const escapedUrl = escapeUnsafe(url.value);
 
-    var date = (new Date()).toLocaleDateString("en-us").replace('/', '-').replace('/', '-');
     stream.write(`\n  <url>\n    <loc>${escapedUrl}</loc>`);
     for (let alternativeUrl of url.alternatives) {
       // Skip self refrence alternative URL
@@ -55,7 +54,7 @@ module.exports = function SitemapStream() {
     }
     stream.write(`\n    <changefreq>daily</changefreq>`);
     stream.write(`\n    <priority>` + getPiriorityFromDepth(url.depth) + `</priority>`);
-    stream.write(`\n    <lastmod>` + date + `</lastmod>`);
+    stream.write(`\n    <lastmod>` + getCurrentDateTime + `</lastmod>`);
     stream.write(`\n  </url>`);
   }
   const flush = () => {
@@ -64,22 +63,6 @@ module.exports = function SitemapStream() {
     for (let url of urls) {
       flushURL(url);
     }
-=======
-  const write = (url, currentDateTime, changeFreq, priority) => {
-    const escapedUrl = escapeUnsafe(url);
-    stream.write('\n  <url>\n');
-    stream.write(`    <loc>${escapedUrl}</loc>\n`);
-    if (currentDateTime) {
-      stream.write(`    <lastmod>${currentDateTime}</lastmod>\n`);
-    }
-    if (changeFreq) {
-      stream.write(`    <changefreq>${changeFreq}</changefreq>\n`);
-    }
-    if (priority) {
-      stream.write(`    <priority>${priority}</priority>\n`);
-    }
-    stream.write('  </url>');
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/SitemapStream.js
   };
 
   const end = () => {

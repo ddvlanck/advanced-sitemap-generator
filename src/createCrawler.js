@@ -70,14 +70,8 @@ module.exports = (uri, options = {}) => {
   // file type exclusion
   crawler.addFetchCondition(parsedUrl => !parsedUrl.path.match(extRegex));
 
-<<<<<<< HEAD:lib/createCrawler.js
   // urls exclusion
   crawler.addFetchCondition(parsedUrl => !parsedUrl.path.match(urlRegex));
 
-  // custom discover function
-  crawler.discoverResources = discoverResources;
-
-=======
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/createCrawler.js
   return crawler;
 };

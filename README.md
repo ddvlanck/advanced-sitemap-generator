@@ -158,14 +158,6 @@ Default: `true`
 
 Whether to deep crawl every page searching for hreflang attributes to add alternative links to the generated sitemap or not.
 
-### priorityMap
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
-
-Type: `array`  
-Default: `[]`
-
-If provided, adds a `<priority>` line to each URL in the sitemap. Each value in priorityMap array corresponds with the depth of the URL being added. For example, the priority value given to a URL equals `priorityMap[depth - 1]`. If a URL's depth is greater than the length of the priorityMap array, the last value in the array will be used. Valid values are between `1.0` and `0.0`.
-
 ## Events
 
 The Sitemap Generator emits several events which can be listened to.
