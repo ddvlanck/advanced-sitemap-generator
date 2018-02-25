@@ -98,7 +98,7 @@ You can provide some options to alter the behaviour of the crawler.
 ```JavaScript
 var generator = SitemapGenerator('http://example.com', {
   ignoreHreflang: true,
-  crawlerMaxDepth: 0,
+  maxDepth: 0,
   filepath: path.join(process.cwd(), 'sitemap.xml'),
   maxEntriesPerFile: 50000,
   stripQuerystring: true,
@@ -123,7 +123,7 @@ Default: `undefined`
 
 Password for basic authentication. Has to be used with `authUser` option.
 
-### crawlerMaxDepth
+### maxDepth
 
 Type: `number`  
 Default: `0`
