@@ -1,43 +1,9 @@
 {
-  "author": {
-    "name": "Hazem Hagrass",
-    "email": "me@hazemhagrass.com",
-    "url": "http://hazemhagrass.com"
-  },
-  "bugs": {
-    "url": "https://github.com/hazemhagrass/sitemap-generator/issues"
-  },
-  "bundleDependencies": false,
-  "dependencies": {
-    "async": "2.6.0",
-    "cheerio": "1.0.0-rc.2",
-    "cherio": "^1.0.0-rc.2",
-    "cld": "^2.4.7",
-    "cp-file": "5.0.0",
-    "crypto-random-string": "1.0.0",
-    "mitt": "1.1.2",
-    "normalize-url": "^2.0.1",
-    "request": "^2.83.0",
-    "simplecrawler": "1.1.6",
-    "url-parse": "1.2.0"
-  },
-  "deprecated": false,
+  "name": "sitemap-generator",
+  "version": "8.0.0",
   "description": "Easily create XML sitemaps for your website.",
-  "devDependencies": {
-    "eslint": "4.18.1",
-    "husky": "0.14.3",
-    "jest": "22.4.0",
-    "lint-staged": "7.0.0",
-    "prettier": "1.10.2"
-  },
-  "engines": {
-    "node": ">=6"
-  },
-  "files": [
-    "lib",
-    "!**/__tests__"
-  ],
   "homepage": "https://github.com/hazemhagrass/sitemap-generator",
+  "author": "Hazem Hagrass",
   "keywords": [
     "sitemap",
     "xml",
@@ -48,7 +14,55 @@
     "google",
     "ecosystem:node"
   ],
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazemhagrass/sitemap-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hazemhagrass/sitemap-generator/issues"
+  },
+  "dependencies": {
+    "async": "2.6.0",
+    "cheerio": "1.0.0-rc.2",
+    "cp-file": "5.0.0",
+    "crypto-random-string": "1.0.0",
+    "lodash": "4.17.5",
+    "mitt": "1.1.3",
+    "normalize-url": "2.0.1",
+    "simplecrawler": "1.1.6",
+    "url-parse": "1.2.0",
+    "cherio": "^1.0.0-rc.2",
+    "cld": "^2.4.7",
+    "request": "^2.83.0",
+  },
+  "engines": {
+    "node": ">=6"
+  },
   "license": "MIT",
+  "files": [
+    "src",
+    "!**/__tests__"
+  ],
+  "devDependencies": {
+    "eslint": "4.18.1",
+    "husky": "0.14.3",
+    "jest": "22.4.0",
+    "lint-staged": "7.0.0",
+    "prettier": "1.10.2",
+    "eslint": "4.18.1",
+    "husky": "0.14.3",
+    "jest": "22.4.0",
+    "lint-staged": "7.0.0",
+    "prettier": "1.10.2"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "precommit": "lint-staged",
+    "test": "jest",
+    "test:watch": "npm test -- --watch",
+    "flow": "flow"
+  },
   "lint-staged": {
     "*.js": [
       "eslint --fix",
@@ -56,16 +70,17 @@
       "git add"
     ]
   },
-  "main": "lib/index.js",
-  "name": "sitemap-generator",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hazemhagrass/sitemap-generator.git"
+  "prettier": {
+    "singleQuote": true
   },
-  "scripts": {
-    "lint": "eslint lib",
-    "precommit": "lint-staged",
-    "test": "jest"
-  },
-  "version": "8.0.2"
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 6
+    },
+    "extends": "eslint:recommended",
+    "env": {
+      "node": true,
+      "jest": true
+    }
+  }
 }
