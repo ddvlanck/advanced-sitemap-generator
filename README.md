@@ -102,10 +102,10 @@ var generator = SitemapGenerator('http://example.com', {
   filepath: path.join(process.cwd(), 'sitemap.xml'),
   maxEntriesPerFile: 50000,
   stripQuerystring: true,
-  exclude: ['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'webm', 'mp3', 'ttf',
+  excludeFileTypes: ['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'webm', 'mp3', 'ttf',
     'woff', 'json', 'rss', 'atom', 'gz', 'zip', 'rar', '7z', 'css', 'js', 'gzip', 'exe', 'svg',
     'xml'],
-    excludeURLs: ['cxyz']
+  excludeURLs: ['cxyz']
 });
 ```
 
@@ -144,7 +144,7 @@ Default: `http.globalAgent`
 
 Controls what HTTP agent to use. This is useful if you want configure HTTP connection through a HTTP/HTTPS proxy (see [http-proxy-agent](https://www.npmjs.com/package/http-proxy-agent)).
 
-### exclude
+### excludeFileTypes
 
 Type: `Array`  
 Default: `['gif', 'jpg', 'jpeg', 'png', 'ico', 'bmp', 'ogg', 'webp', 'mp4', 'webm', 'mp3', 'ttf',
