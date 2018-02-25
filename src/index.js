@@ -14,6 +14,7 @@ const SitemapRotator = require('./SitemapRotator');
 const createSitemapIndex = require('./createSitemapIndex');
 const extendFilename = require('./helpers/extendFilename');
 const validChangeFreq = require('./helpers/validChangeFreq');
+const isValidURL = require('./helpers/isValidURL');
 const discoverResources = require('./discoverResources');
 
 module.exports = function SitemapGenerator(uri, opts) {
@@ -261,21 +262,23 @@ module.exports = function SitemapGenerator(uri, opts) {
     // check if robots noindex is present
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
       emitter.emit('ignore', url);
-    } else {
+    } else if (isValidURL(url)) {
       emitter.emit('add', url);
       addURL(url, depth);
+    } else {
+      emitError('404', url);
     }
   });
 
   crawler.on('complete', onCrawlerComplete);
   emitter.on('add', (queueItem, page) => {
-    stats.add ++;
+    stats.add++;
   });
   emitter.on('ignore', (queueItem, page) => {
-    stats.ignore ++;
+    stats.ignore++;
   });
   emitter.on('error', (queueItem, page) => {
-    stats.error ++;
+    stats.error++;
   });
 
   return {
