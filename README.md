@@ -25,11 +25,8 @@ $ npm install -S sitemap-generator
 
 This module is running only with Node.js and is not meant to be used in the browser.
 
-```JavaScript
-const SitemapGenerator = require('sitemap-generator');
-```
-
 ## Usage
+
 ```JavaScript
 const SitemapGenerator = require('sitemap-generator');
 
@@ -52,27 +49,7 @@ The crawler will fetch all folder URL pages and file types [parsed by Google](ht
 
 ## API
 
-The generator offers straightforward methods to start and stop it. You can also query some information about status and output.
-
-### getPaths()
-
-Returns array of paths to generated sitemaps. Empty until the crawler is done.
-
-### getStats()
-
-Returns object with info about fetched URL's. Get's updated live during crawling process.
-
-```JavaScript
-{
-  added: 0,
-  ignored: 0,
-  errored: 0
-}
-```
-
-### getStatus()
-
-Returns the status of the generator. Possible values are `waiting`, `started`, `stopped` and `done`.
+The generator offers straightforward methods to start and stop it. You can also add URL's manually.
 
 ### start()
 
@@ -89,16 +66,20 @@ Stops the running crawler and halts the sitemap generation.
 
 ### queueURL(url)
 
-Add a URL to crawler's queue. Useful to help crawler fetch pages it can't find itself. 
+Add a URL to crawler's queue. Useful to help crawler fetch pages it can't find itself.
 
 ## Options
 
-You can provide some options to alter the behaviour of the crawler.
+There are a couple of options to adjust the sitemap output. In addition to the options beneath the options of the used crawler can be changed. For a complete list please check it's [official documentation](https://github.com/simplecrawler/simplecrawler#configuration).
 
 ```JavaScript
 var generator = SitemapGenerator('http://example.com', {
+<<<<<<< HEAD
   ignoreHreflang: true,
   crawlerMaxDepth: 0,
+=======
+  maxDepth: 0,
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
   filepath: path.join(process.cwd(), 'sitemap.xml'),
   maxEntriesPerFile: 50000,
   stripQuerystring: true,
@@ -109,26 +90,12 @@ var generator = SitemapGenerator('http://example.com', {
 });
 ```
 
-### authUser
+### changeFreq
 
 Type: `string`  
 Default: `undefined`
 
-Provides an username for basic authentication. Requires `authPass` option.
-
-### authPass
-
-Type: `string`  
-Default: `undefined`
-
-Password for basic authentication. Has to be used with `authUser` option.
-
-### crawlerMaxDepth
-
-Type: `number`  
-Default: `0`
-
-Defines a maximum distance from the original request at which resources will be fetched.
+If defined, adds a `<changefreq>` line to each URL in the sitemap. Possible values are `always`, `hourly`, `daily`, `weekly`, `monthly`, `yearly`, `never`. All other values are ignored.
 
 ### filepath
 
@@ -167,6 +134,13 @@ Default: `https.globalAgent`
 
 Controls what HTTPS agent to use. This is useful if you want configure HTTPS connection through a HTTP/HTTPS proxy (see [https-proxy-agent](https://www.npmjs.com/package/https-proxy-agent)).
 
+### lastMod
+
+Type: `boolean`  
+Default: `false`
+
+Whether to add a `<lastmod>` line to each URL in the sitemap, and fill it with today's date.
+
 ### maxEntriesPerFile
 
 Type: `number`  
@@ -174,6 +148,7 @@ Default: `50000`
 
 Google limits the maximum number of URLs in one sitemap to 50000. If this limit is reached the sitemap-generator creates another sitemap. A sitemap index file will be created as well.
 
+<<<<<<< HEAD
 ### stripQueryString
 
 Type: `boolean`  
@@ -189,11 +164,14 @@ Default: `true`
 Whether to deep crawl every page searching for hreflang attributes to add alternative links to the generated sitemap or not.
 
 ### userAgent
+=======
+### priorityMap
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
 
-Type: `string`  
-Default: `Node/SitemapGenerator`
+Type: `array`  
+Default: `[]`
 
-Set the User Agent used by the crawler.
+If provided, adds a `<priority>` line to each URL in the sitemap. Each value in priorityMap array corresponds with the depth of the URL being added. For example, the priority value given to a URL equals `priorityMap[depth - 1]`. If a URL's depth is greater than the length of the priorityMap array, the last value in the array will be used. Valid values are between `1.0` and `0.0`.
 
 ## Events
 
@@ -211,10 +189,10 @@ generator.on('add', (url) => {
 
 ### `done`
 
-Triggered when the crawler finished and the sitemap is created. Provides statistics as first argument. Stats are the same as from `getStats`.
+Triggered when the crawler finished and the sitemap is created.
 
 ```JavaScript
-generator.on('done', (stats) => {
+generator.on('done', () => {
   // sitemaps created
 });
 ```
