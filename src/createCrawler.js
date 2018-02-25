@@ -37,7 +37,6 @@ module.exports = (uri, options = {}) => {
   let exlcudeURLsArray = ['%&%&%_'];
   const exclude = (options.excludeFileTypes ? options.excludeFileTypes : exlcudeDefaultArray).join('|');
   const excludeURLs = (options.excludeURLs ? options.excludeURLs : exlcudeURLsArray).join('|');
-  console.log(exclude);
   const extRegex = new RegExp(`\\.(${exclude})$`, 'i');
   const urlRegex = new RegExp(`\\${excludeURLs}`, 'i');
 
@@ -70,10 +69,6 @@ module.exports = (uri, options = {}) => {
 
   // file type and urls exclusion
   crawler.addFetchCondition(parsedUrl => {
-    if(parsedUrl.path.lastIndexOf('.css?ver') !== -1){
-      console.log(parsedUrl.path, !parsedUrl.path.match(extRegex));
-    }
-    
     return !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(extRegex);
   });
 
