@@ -54,7 +54,7 @@ module.exports = function SitemapStream() {
     }
     stream.write(`\n    <changefreq>daily</changefreq>`);
     stream.write(`\n    <priority>` + getPiriorityFromDepth(url.depth) + `</priority>`);
-    stream.write(`\n    <lastmod>` + getCurrentDateTime + `</lastmod>`);
+    stream.write(`\n    <lastmod>` + getCurrentDateTime() + `</lastmod>`);
     stream.write(`\n  </url>`);
   }
   const flush = () => {

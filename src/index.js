@@ -2,13 +2,11 @@ const fs = require('fs');
 const http = require('http');
 const path = require('path');
 const parseURL = require('url-parse');
-const eachSeries = require('async/eachSeries');
 const cpFile = require('cp-file');
 const cheerio = require('cheerio')
 const request = require('request');
 const normalizeUrl = require('normalize-url');
 const cld = require('cld');
-const normalizeUrl = require('normalize-url');
 const mitt = require('mitt');
 
 const createCrawler = require('./createCrawler');
@@ -41,18 +39,13 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const options = Object.assign({}, defaultOpts, opts);
 
-  const {log, on, off, stats} = Logger();
-
-  let status = 'waiting';
   let cachedResultURLs = [];
   let realCrawlingDepth = 0;
-
-  const setStatus = newStatus => {
-    status = newStatus;
+  const stats = {
+    add: 0,
+    ignore: 0,
+    error: 0
   };
-
-  const getStatus = () => status;
-
   const getStats = () => ({
     added: stats.add || 0,
     ignored: stats.ignore || 0,
@@ -83,12 +76,10 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const start = () => {
     cachedResultURLs = [];
-    setStatus('started');
     crawler.start();
   };
 
   const stop = () => {
-    setStatus('stopped');
     crawler.stop();
   };
   const createSitemapFromURLs = (urls) => {
@@ -151,7 +142,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           });
           resolve(urlObj);
         }).catch((error) => {
-          logError(500, error.message);
+          emitError(500, error.message);
         });
       });
     };
@@ -185,7 +176,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           cachedResultURLs.push(urlObj);
           resolve(urlObj);
         }).catch((error) => {
-          logError(500, error.message);
+          emitError(500, error.message);
           reject(error);
         });
       }
@@ -206,10 +197,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
       const sitemaps = sitemap.getPaths();
 
-      const cb = () => {
-        setStatus('done');
-        log('done', getStats());
-      };
+      const cb = () => emitter.emit('done', getStats());
 
       // move files
       if (sitemaps.length > 1) {
@@ -219,7 +207,6 @@ module.exports = function SitemapGenerator(uri, opts) {
           sitemaps,
           (tmpPath, done) => {
             const newPath = extendFilename(sitemapPath, `_part${count}`);
-            paths.push(newPath);
 
             // copy and remove tmp file
             cpFile(tmpPath, newPath).then(() => {
@@ -231,7 +218,6 @@ module.exports = function SitemapGenerator(uri, opts) {
             count += 1;
           },
           () => {
-            paths.unshift(sitemapPath);
             const filename = path.basename(sitemapPath);
             fs.writeFile(
               sitemapPath,
@@ -241,7 +227,6 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
         );
       } else if (sitemaps.length) {
-        paths.unshift(sitemapPath);
         cpFile(sitemaps[0], sitemapPath).then(() => {
           fs.unlink(sitemaps[0], cb);
         });
@@ -277,22 +262,27 @@ module.exports = function SitemapGenerator(uri, opts) {
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
       emitter.emit('ignore', url);
     } else {
-      log('add', url);
+      emitter.emit('add', url);
       addURL(url, depth);
     }
   });
 
   crawler.on('complete', onCrawlerComplete);
+  emitter.on('add', (queueItem, page) => {
+    stats.add ++;
+  });
+  emitter.on('ignore', (queueItem, page) => {
+    stats.ignore ++;
+  });
+  emitter.on('error', (queueItem, page) => {
+    stats.error ++;
+  });
 
   return {
-    getPaths,
     getStats,
-    getStatus,
-    start: () => crawler.start(),
-    stop: () => crawler.stop(),
-    queueURL: url => {
-      crawler.queueURL(url, undefined, false);
-    },
+    start,
+    stop,
+    queueURL,
     on: emitter.on,
     off: emitter.off,
     createSitemapFromURLs
