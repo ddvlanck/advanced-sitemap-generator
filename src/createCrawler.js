@@ -34,7 +34,7 @@ module.exports = (uri, options = {}) => {
     'svg',
     'xml'
   ];
-  let exlcudeURLsArray = ['%&%&%_'];
+  let exlcudeURLsArray = ['/wp-json/'];
   const exclude = (options.excludeFileTypes
     ? options.excludeFileTypes
     : exlcudeDefaultArray
