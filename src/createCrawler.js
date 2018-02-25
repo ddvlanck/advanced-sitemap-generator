@@ -35,8 +35,14 @@ module.exports = (uri, options = {}) => {
     'xml'
   ];
   let exlcudeURLsArray = ['%&%&%_'];
-  const exclude = (options.excludeFileTypes ? options.excludeFileTypes : exlcudeDefaultArray).join('|');
-  const excludeURLs = (options.excludeURLs ? options.excludeURLs : exlcudeURLsArray).join('|');
+  const exclude = (options.excludeFileTypes
+    ? options.excludeFileTypes
+    : exlcudeDefaultArray
+  ).join('|');
+  const excludeURLs = (options.excludeURLs
+    ? options.excludeURLs
+    : exlcudeURLsArray
+  ).join('|');
   const extRegex = new RegExp(`\\.(${exclude})$`, 'i');
   const urlRegex = new RegExp(`\\${excludeURLs}`, 'i');
 
@@ -69,7 +75,7 @@ module.exports = (uri, options = {}) => {
 
   // file type and urls exclusion
   crawler.addFetchCondition(parsedUrl => {
-    return !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(extRegex);
+    return !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex);
   });
 
   return crawler;
