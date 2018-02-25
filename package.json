@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "_from": "git+https://github.com/hazemhagrass/sitemap-generator.git",
   "_id": "sitemap-generator@7.5.2",
   "_inBundle": false,
@@ -51,27 +50,6 @@
     "name": "Lars Graubner",
     "email": "mail@larsgraubner.de",
     "url": "http://larsgraubner.de"
-=======
-  "name": "sitemap-generator",
-  "version": "8.0.0",
-  "description": "Easily create XML sitemaps for your website.",
-  "homepage": "https://github.com/lgraubner/sitemap-generator",
-  "author": "Lars Graubner <mail@larsgraubner.de> (https://larsgraubner.com)",
-  "keywords": [
-    "sitemap",
-    "xml",
-    "sitemap.xml",
-    "generator",
-    "crawler",
-    "seo",
-    "google",
-    "ecosystem:node"
-  ],
-  "main": "src/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/lgraubner/sitemap-generator.git"
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
   },
   "bugs": {
     "url": "https://github.com/lgraubner/sitemap-generator/issues"
@@ -84,7 +62,6 @@
     "cld": "^2.4.7",
     "cp-file": "5.0.0",
     "crypto-random-string": "1.0.0",
-<<<<<<< HEAD
     "mitt": "1.1.2",
     "normalize-url": "^2.0.1",
     "request": "^2.83.0",
@@ -93,22 +70,6 @@
   },
   "deprecated": false,
   "description": "Easily create XML sitemaps for your website.",
-=======
-    "lodash": "4.17.5",
-    "mitt": "1.1.3",
-    "normalize-url": "2.0.1",
-    "simplecrawler": "1.1.6",
-    "url-parse": "1.2.0"
-  },
-  "engines": {
-    "node": ">=6"
-  },
-  "license": "MIT",
-  "files": [
-    "src",
-    "!**/__tests__"
-  ],
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
   "devDependencies": {
     "eslint": "4.18.1",
     "husky": "0.14.3",
@@ -116,17 +77,8 @@
     "lint-staged": "7.0.0",
     "prettier": "1.10.2"
   },
-<<<<<<< HEAD
   "engines": {
     "node": ">=6"
-=======
-  "scripts": {
-    "lint": "eslint src",
-    "precommit": "lint-staged",
-    "test": "jest",
-    "test:watch": "npm test -- --watch",
-    "flow": "flow"
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
   },
   "files": [
     "lib",
@@ -151,7 +103,6 @@
       "git add"
     ]
   },
-<<<<<<< HEAD
   "main": "lib/index.js",
   "name": "sitemap-generator",
   "repository": {
@@ -164,19 +115,4 @@
     "test": "jest"
   },
   "version": "7.5.2"
-=======
-  "prettier": {
-    "singleQuote": true
-  },
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 6
-    },
-    "extends": "eslint:recommended",
-    "env": {
-      "node": true,
-      "jest": true
-    }
-  }
->>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f
 }
