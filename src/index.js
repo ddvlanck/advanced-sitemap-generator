@@ -2,26 +2,33 @@ const fs = require('fs');
 const http = require('http');
 const path = require('path');
 const parseURL = require('url-parse');
-const each = require('async/each');
+const eachSeries = require('async/eachSeries');
 const cpFile = require('cp-file');
+<<<<<<< HEAD:lib/index.js
 const cheerio = require('cheerio')
 const request = require('request');
 const normalizeUrl = require('normalize-url');
 const cld = require('cld');
+=======
+const normalizeUrl = require('normalize-url');
+const mitt = require('mitt');
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/index.js
 
 const createCrawler = require('./createCrawler');
 const SitemapRotator = require('./SitemapRotator');
 const createSitemapIndex = require('./createSitemapIndex');
 const extendFilename = require('./helpers/extendFilename');
-const Logger = require('./Logger');
+const validChangeFreq = require('./helpers/validChangeFreq');
+const discoverResources = require('./discoverResources');
 
 module.exports = function SitemapGenerator(uri, opts) {
   const defaultOpts = {
     ignoreHreflang: true,
     stripQuerystring: true,
     maxEntriesPerFile: 50000,
-    crawlerMaxDepth: 0,
+    maxDepth: 0,
     filepath: path.join(process.cwd(), 'sitemap.xml'),
+<<<<<<< HEAD:lib/index.js
     userAgent: 'Node/SitemapGenerator'
   };
 
@@ -46,23 +53,46 @@ module.exports = function SitemapGenerator(uri, opts) {
     urls: cachedResultURLs,
     realCrawlingDepth: realCrawlingDepth
   });
+=======
+    userAgent: 'Node/SitemapGenerator',
+    respectRobotsTxt: true,
+    ignoreInvalidSSL: true,
+    timeout: 30000,
+    discoverResources,
+    decodeResponses: true,
+    lastMod: false,
+    changeFreq: '',
+    priorityMap: []
+  };
 
-  const paths = [];
-
-  const getPaths = () => paths;
-
-  const parsedUrl = parseURL(uri);
-  const sitemapPath = path.resolve(options.filepath);
-
-  if (parsedUrl.protocol === '') {
-    throw new TypeError('Invalid URL.');
+  if (!uri) {
+    throw new Error('Requires a valid URL.');
   }
+
+  const options = Object.assign({}, defaultOpts, opts);
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/index.js
+
+  // if changeFreq option was passed, check to see if the value is valid
+  if (opts && opts.changeFreq) {
+    options.changeFreq = validChangeFreq(opts.changeFreq);
+  }
+
+  const emitter = mitt();
+
+  const parsedUrl = parseURL(
+    normalizeUrl(uri, {
+      stripWWW: false,
+      removeTrailingSlash: false
+    })
+  );
+  const sitemapPath = path.resolve(options.filepath);
 
   // we don't care about invalid certs
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
   const crawler = createCrawler(parsedUrl, options);
 
+<<<<<<< HEAD:lib/index.js
   const start = () => {
     cachedResultURLs = [];
     setStatus('started');
@@ -145,12 +175,21 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   // create sitemap stream
   const sitemap = SitemapRotator(options);
+=======
+  // create sitemap stream
+  const sitemap = SitemapRotator(
+    options.maxEntriesPerFile,
+    options.lastMod,
+    options.changeFreq,
+    options.priorityMap
+  );
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/index.js
 
-  const logError = (code, url) => {
-    log('error', {
+  const emitError = (code, url) => {
+    emitter.emit('error', {
       code,
       message: http.STATUS_CODES[code],
-      url,
+      url
     });
   };
   const addURL= (url, depth) => {
@@ -236,21 +275,28 @@ module.exports = function SitemapGenerator(uri, opts) {
     setTimeout(init, 10000);
   };
 
+<<<<<<< HEAD:lib/index.js
   crawler.on('fetch404', ({url}) => logError(404, url));
   crawler.on('fetchtimeout', ({url}) => logError(408, url));
   crawler.on('fetch410', ({url}) => logError(410, url));
+=======
+  crawler.on('fetch404', ({ url }) => emitError(404, url));
+  crawler.on('fetchtimeout', ({ url }) => emitError(408, url));
+  crawler.on('fetch410', ({ url }) => emitError(410, url));
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/index.js
   crawler.on('fetcherror', (queueItem, response) =>
-    logError(response.statusCode, queueItem.url)
+    emitError(response.statusCode, queueItem.url)
   );
 
   crawler.on('fetchclienterror', (queueError, errorData) => {
     if (errorData.code === 'ENOTFOUND') {
       throw new Error(`Site "${parsedUrl.href}" could not be found.`);
     } else {
-      logError(400, errorData.message);
+      emitError(400, errorData.message);
     }
   });
 
+<<<<<<< HEAD:lib/index.js
   crawler.on('fetchdisallowed', ({url}) => log('ignore', url));
 
   // fetch complete event
@@ -258,10 +304,18 @@ module.exports = function SitemapGenerator(uri, opts) {
     const {url} = queueItem;
     const {depth} = queueItem;
 
+=======
+  crawler.on('fetchdisallowed', ({ url }) => emitter.emit('ignore', url));
+
+  // fetch complete event
+  crawler.on('fetchcomplete', (queueItem, page) => {
+    const { url, depth } = queueItem;
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/index.js
     // check if robots noindex is present
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
-      log('ignore', url);
+      emitter.emit('ignore', url);
     } else {
+<<<<<<< HEAD:lib/index.js
       log('add', url);
       addURL(url, depth);
     }
@@ -279,5 +333,63 @@ module.exports = function SitemapGenerator(uri, opts) {
     on,
     off,
     createSitemapFromURLs
+=======
+      emitter.emit('add', url);
+      sitemap.addURL(url, depth);
+    }
+  });
+
+  crawler.on('complete', () => {
+    sitemap.finish();
+
+    const sitemaps = sitemap.getPaths();
+
+    const cb = () => emitter.emit('done');
+
+    // move files
+    if (sitemaps.length > 1) {
+      // multiple sitemaps
+      let count = 1;
+      eachSeries(
+        sitemaps,
+        (tmpPath, done) => {
+          const newPath = extendFilename(sitemapPath, `_part${count}`);
+
+          // copy and remove tmp file
+          cpFile(tmpPath, newPath).then(() => {
+            fs.unlink(tmpPath, () => {
+              done();
+            });
+          });
+
+          count += 1;
+        },
+        () => {
+          const filename = path.basename(sitemapPath);
+          fs.writeFile(
+            sitemapPath,
+            createSitemapIndex(parsedUrl.toString(), filename, sitemaps.length),
+            cb
+          );
+        }
+      );
+    } else if (sitemaps.length) {
+      cpFile(sitemaps[0], sitemapPath).then(() => {
+        fs.unlink(sitemaps[0], cb);
+      });
+    } else {
+      cb();
+    }
+  });
+
+  return {
+    start: () => crawler.start(),
+    stop: () => crawler.stop(),
+    queueURL: url => {
+      crawler.queueURL(url, undefined, false);
+    },
+    on: emitter.on,
+    off: emitter.off
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/index.js
   };
 };

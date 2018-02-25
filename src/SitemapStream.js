@@ -11,6 +11,7 @@ module.exports = function SitemapStream() {
 
   const getPath = () => tmpPath;
 
+<<<<<<< HEAD:lib/SitemapStream.js
   const getPiriorityFromDepth = depth => {
     let pir = 0.5;
     let zeroIndexedDepth = depth - 1;
@@ -63,6 +64,22 @@ module.exports = function SitemapStream() {
     for (let url of urls) {
       flushURL(url);
     }
+=======
+  const write = (url, currentDateTime, changeFreq, priority) => {
+    const escapedUrl = escapeUnsafe(url);
+    stream.write('\n  <url>\n');
+    stream.write(`    <loc>${escapedUrl}</loc>\n`);
+    if (currentDateTime) {
+      stream.write(`    <lastmod>${currentDateTime}</lastmod>\n`);
+    }
+    if (changeFreq) {
+      stream.write(`    <changefreq>${changeFreq}</changefreq>\n`);
+    }
+    if (priority) {
+      stream.write(`    <priority>${priority}</priority>\n`);
+    }
+    stream.write('  </url>');
+>>>>>>> fa7d6494d317197b3661b07f3d55756d7537006f:src/SitemapStream.js
   };
 
   const end = () => {
