@@ -7,6 +7,7 @@ const cheerio = require('cheerio')
 const request = require('request');
 const normalizeUrl = require('normalize-url');
 const cld = require('cld');
+const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
 
 const createCrawler = require('./createCrawler');
@@ -204,7 +205,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       if (sitemaps.length > 1) {
         // multiple sitemaps
         let count = 1;
-        each(
+        eachSeries(
           sitemaps,
           (tmpPath, done) => {
             const newPath = extendFilename(sitemapPath, `_part${count}`);
