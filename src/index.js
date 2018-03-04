@@ -202,7 +202,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       const cb = () => emitter.emit('done', getStats());
 
       // move files
-      if (sitemaps.length > 1) {
+      if (sitemaps && sitemaps.length > 1) {
         // multiple sitemaps
         let count = 1;
         eachSeries(
