@@ -6,7 +6,11 @@ module.exports = (buffer, queueItem) => {
 
   const metaRobots = $('meta[name="robots"]');
 
-  if (metaRobots.length && /nofollow/i.test(metaRobots.attr('content'))) {
+  if (
+    metaRobots &&
+    metaRobots.length &&
+    /nofollow/i.test(metaRobots.attr('content'))
+  ) {
     return [];
   }
 
@@ -36,7 +40,7 @@ module.exports = (buffer, queueItem) => {
     // (does not start with "http(s)" or "//")
     if (!/^https?:\/\//.test(href)) {
       const base = $('base').first();
-      if (base.length) {
+      if (base && base.length) {
         // base tag is set, prepend it
         if (base.attr('href') !== undefined) {
           // base tags sometimes don't define href, they sometimes they only set target="_top", target="_blank"
