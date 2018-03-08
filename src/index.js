@@ -28,6 +28,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     userAgent: 'Node/SitemapGenerator',
     respectRobotsTxt: true,
     ignoreInvalidSSL: true,
+    recommendAlternatives: false,
     timeout: 30000,
     discoverResources,
     decodeResponses: true,
@@ -171,14 +172,12 @@ module.exports = function SitemapGenerator(uri, opts) {
     let urlObj = {value: url, depth: depth, flushed: false, alternatives: [], lang: 'en'};
     const init = (resolve, reject) => {
       if (options.ignoreHreflang) {
-        sitemap.addURL(urlObj);
         cachedResultURLs.push(urlObj);
         resolve(urlObj);
       }
       else {
         detectUrlLang(urlObj).then(result => {
           urlObj = result;
-          sitemap.addURL(urlObj);
           cachedResultURLs.push(urlObj);
           resolve(urlObj);
         }).catch((error) => {
@@ -197,7 +196,51 @@ module.exports = function SitemapGenerator(uri, opts) {
     return promise;
   };
   const onCrawlerComplete = () => {
+    const getLangs = () => {
+      let langs = [];
+      for (let url of cachedResultURLs) {
+        let isExisted = langs.filter(function (lang) {
+          return lang === url.lang;
+        }).length;
+        if (isExisted) {
+          continue;
+        }
+        langs.push(url.lang);
+      }
+      return langs;
+    }
+    const recommendAlternatives = () => {
+      for (let url of cachedResultURLs) {
+        let pureURL = url.value.replaceAll('/' + url.lang, '');
+        for (let otherURL of cachedResultURLs) {
+          let otherPureURL = otherURL.value.replaceAll('/' + otherURL.lang, '');
+          if (url.value === otherURL.value || pureURL !== otherPureURL) {
+            continue;
+          }
+
+          let isAlternativeAddedBefore = url.alternatives.filter(function (alter) {
+            return alter.value === otherURL.value
+          }).length;
+          if (isAlternativeAddedBefore) {
+            continue;
+          }
+
+          url.alternatives.push({
+            value: otherURL.value,
+            flushed: false,
+            lang: otherURL.lang
+          });
+        }
+      }
+    }
     const init = () => {
+      if (options.recommendAlternatives) {
+        recommendAlternatives();
+      }
+
+      for (let url of cachedResultURLs) {
+        sitemap.addURL(url);
+      }
       sitemap.flush();
       sitemap.finish();
 
