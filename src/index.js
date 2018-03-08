@@ -236,7 +236,7 @@ module.exports = function SitemapGenerator(uri, opts) {
         let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function (alter) {
           return alter.value === url.value
         }).length;
-        if (url.alternatives === 0 || isSelfRefrencingAlternativeAddedBefore) {
+        if (url.alternatives.length === 0 || isSelfRefrencingAlternativeAddedBefore) {
           continue;
         }
 
