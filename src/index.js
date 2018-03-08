@@ -289,6 +289,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     queueURL,
     on: emitter.on,
     off: emitter.off,
+    getPaths: sitemap.getPaths,
     createSitemapFromURLs
   };
 };
