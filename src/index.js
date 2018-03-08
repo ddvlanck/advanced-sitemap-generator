@@ -221,6 +221,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           let isAlternativeAddedBefore = url.alternatives.filter(function (alter) {
             return alter.value === otherURL.value
           }).length;
+
           if (isAlternativeAddedBefore) {
             continue;
           }
@@ -231,6 +232,19 @@ module.exports = function SitemapGenerator(uri, opts) {
             lang: otherURL.lang
           });
         }
+
+        let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function (alter) {
+          return alter.value === url.value
+        }).length;
+        if (url.alternatives === 0 || isSelfRefrencingAlternativeAddedBefore) {
+          continue;
+        }
+
+        url.alternatives.push({
+          value: url.value,
+          flushed: false,
+          lang: url.lang
+        });
       }
     }
     const init = () => {
