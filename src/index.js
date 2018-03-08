@@ -43,6 +43,8 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   let cachedResultURLs = [];
   let realCrawlingDepth = 0;
+  let savedOnDiskSitemapPaths = [];
+
   const stats = {
     add: 0,
     ignore: 0,
@@ -55,7 +57,9 @@ module.exports = function SitemapGenerator(uri, opts) {
     urls: cachedResultURLs,
     realCrawlingDepth: realCrawlingDepth
   });
-
+  const getPaths = () => {
+    return savedOnDiskSitemapPaths;
+  }
   // if changeFreq option was passed, check to see if the value is valid
   if (opts && opts.changeFreq) {
     options.changeFreq = validChangeFreq(opts.changeFreq);
@@ -209,7 +213,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           sitemaps,
           (tmpPath, done) => {
             const newPath = extendFilename(sitemapPath, `_part${count}`);
-
+            savedOnDiskSitemapPaths.push(newPath);
             // copy and remove tmp file
             cpFile(tmpPath, newPath).then(() => {
               fs.unlink(tmpPath, () => {
@@ -221,6 +225,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           },
           () => {
             const filename = path.basename(sitemapPath);
+            savedOnDiskSitemapPaths.push(sitemapPath);
             fs.writeFile(
               sitemapPath,
               createSitemapIndex(parsedUrl.toString(), filename, sitemaps.length),
@@ -229,6 +234,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
         );
       } else if (sitemaps.length) {
+        savedOnDiskSitemapPaths.push(sitemapPath);
         cpFile(sitemaps[0], sitemapPath).then(() => {
           fs.unlink(sitemaps[0], cb);
         });
@@ -289,7 +295,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     queueURL,
     on: emitter.on,
     off: emitter.off,
-    getPaths: sitemap.getPaths,
+    getPaths,
     createSitemapFromURLs
   };
 };
