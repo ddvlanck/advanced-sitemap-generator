@@ -9,6 +9,7 @@ const normalizeUrl = require('normalize-url');
 const cld = require('cld');
 const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
+const compareUrls = require('compare-urls');
 
 const createCrawler = require('./createCrawler');
 const SitemapRotator = require('./SitemapRotator');
@@ -219,7 +220,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
 
           let isAlternativeAddedBefore = url.alternatives.filter(function (alter) {
-            return alter.value === otherURL.value
+            return compareUrls(alter.value, otherURL.value);
           }).length;
 
           if (isAlternativeAddedBefore) {
@@ -234,7 +235,7 @@ module.exports = function SitemapGenerator(uri, opts) {
         }
 
         let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function (alter) {
-          return alter.value === url.value
+          return compareUrls(alter.value, url.value);
         }).length;
         if (url.alternatives.length === 0 || isSelfRefrencingAlternativeAddedBefore) {
           continue;
