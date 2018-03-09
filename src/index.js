@@ -172,7 +172,15 @@ module.exports = function SitemapGenerator(uri, opts) {
   const addURL = (url, depth) => {
     let urlObj = {value: url, depth: depth, flushed: false, alternatives: [], lang: 'en'};
     const init = (resolve, reject) => {
-      if (options.ignoreHreflang) {
+      let isExisted = cachedResultURLs.filter(function (item) {
+        return compareUrls(urlObj.value, item.value);
+      }).length;
+
+      if (isExisted) {
+        emitError(200, 'URL WAS CRAWLED BEFORE');
+        reject({});
+      }
+      else if (options.ignoreHreflang) {
         cachedResultURLs.push(urlObj);
         resolve(urlObj);
       }
@@ -197,19 +205,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     return promise;
   };
   const onCrawlerComplete = () => {
-    const getLangs = () => {
-      let langs = [];
-      for (let url of cachedResultURLs) {
-        let isExisted = langs.filter(function (lang) {
-          return lang === url.lang;
-        }).length;
-        if (isExisted) {
-          continue;
-        }
-        langs.push(url.lang);
-      }
-      return langs;
-    }
     const recommendAlternatives = () => {
       for (let url of cachedResultURLs) {
         let pureURL = url.value.replaceAll('/' + url.lang, '');
