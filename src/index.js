@@ -16,6 +16,7 @@ const SitemapRotator = require('./SitemapRotator');
 const createSitemapIndex = require('./createSitemapIndex');
 const extendFilename = require('./helpers/extendFilename');
 const validChangeFreq = require('./helpers/validChangeFreq');
+const getLangCodeMap = require('./helpers/getLangCodeMap');
 const isValidURL = require('./helpers/isValidURL');
 const discoverResources = require('./discoverResources');
 
@@ -205,11 +206,19 @@ module.exports = function SitemapGenerator(uri, opts) {
     return promise;
   };
   const onCrawlerComplete = () => {
+    const getLangFreeURL = (url) => {
+      const langs = getLangCodeMap(url.lang);
+      let pureURL = url.value;
+      for (let lang of langs) {
+        pureURL = pureURL.replaceAll('/' + lang, '');
+      }
+      return pureURL;
+    };
     const recommendAlternatives = () => {
       for (let url of cachedResultURLs) {
-        let pureURL = url.value.replaceAll('/' + url.lang, '');
+        let pureURL = getLangFreeURL(url);
         for (let otherURL of cachedResultURLs) {
-          let otherPureURL = otherURL.value.replaceAll('/' + otherURL.lang, '');
+          let otherPureURL = getLangFreeURL(otherURL);
           if (url.value === otherURL.value || pureURL !== otherPureURL) {
             continue;
           }
