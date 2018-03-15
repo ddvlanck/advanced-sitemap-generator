@@ -253,6 +253,50 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
     }
     const init = () => {
+      const finish = () => {
+        sitemap.finish();
+
+        const sitemaps = sitemap.getPaths();
+
+        const cb = () => emitter.emit('done', getStats());
+
+        // move files
+        if (sitemaps && sitemaps.length > 1) {
+          // multiple sitemaps
+          let count = 1;
+          eachSeries(
+            sitemaps,
+            (tmpPath, done) => {
+              const newPath = extendFilename(sitemapPath, `_part${count}`);
+              savedOnDiskSitemapPaths.push(newPath);
+              // copy and remove tmp file
+              cpFile(tmpPath, newPath).then(() => {
+                fs.unlink(tmpPath, () => {
+                  done();
+                });
+              });
+
+              count += 1;
+            },
+            () => {
+              const filename = path.basename(sitemapPath);
+              savedOnDiskSitemapPaths.push(sitemapPath);
+              fs.writeFile(
+                sitemapPath,
+                createSitemapIndex(parsedUrl.toString(), filename, sitemaps.length),
+                cb
+              );
+            }
+          );
+        } else if (sitemaps.length) {
+          savedOnDiskSitemapPaths.push(sitemapPath);
+          cpFile(sitemaps[0], sitemapPath).then(() => {
+            fs.unlink(sitemaps[0], cb);
+          });
+        } else {
+          cb();
+        }
+      };
       if (options.recommendAlternatives) {
         recommendAlternatives();
       }
@@ -261,48 +305,9 @@ module.exports = function SitemapGenerator(uri, opts) {
         sitemap.addURL(url);
       }
       sitemap.flush();
-      sitemap.finish();
-
-      const sitemaps = sitemap.getPaths();
-
-      const cb = () => emitter.emit('done', getStats());
-
-      // move files
-      if (sitemaps && sitemaps.length > 1) {
-        // multiple sitemaps
-        let count = 1;
-        eachSeries(
-          sitemaps,
-          (tmpPath, done) => {
-            const newPath = extendFilename(sitemapPath, `_part${count}`);
-            savedOnDiskSitemapPaths.push(newPath);
-            // copy and remove tmp file
-            cpFile(tmpPath, newPath).then(() => {
-              fs.unlink(tmpPath, () => {
-                done();
-              });
-            });
-
-            count += 1;
-          },
-          () => {
-            const filename = path.basename(sitemapPath);
-            savedOnDiskSitemapPaths.push(sitemapPath);
-            fs.writeFile(
-              sitemapPath,
-              createSitemapIndex(parsedUrl.toString(), filename, sitemaps.length),
-              cb
-            );
-          }
-        );
-      } else if (sitemaps.length) {
-        savedOnDiskSitemapPaths.push(sitemapPath);
-        cpFile(sitemaps[0], sitemapPath).then(() => {
-          fs.unlink(sitemaps[0], cb);
-        });
-      } else {
-        cb();
-      }
+      // Wait extra 10 seconds to make sure that sitemaps been saved on disk
+      //TODO: Refactor
+      setTimeout(finish, 10000);
     };
     // Wait extra 10 seconds to make sure that all pages were handled
     setTimeout(init, 10000);
