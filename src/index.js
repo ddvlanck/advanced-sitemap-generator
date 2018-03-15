@@ -332,8 +332,11 @@ module.exports = function SitemapGenerator(uri, opts) {
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
       emitter.emit('ignore', url);
     } else if (isValidURL(url)) {
-      emitter.emit('add', url);
-      addURL(url, depth);
+      addURL(url, depth).then(() => {
+        emitter.emit('add', url);
+      }).catch((error) => {
+        console.log(error);
+      });
     } else {
       emitError('404', url);
     }
