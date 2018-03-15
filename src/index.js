@@ -209,7 +209,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     const getLangFreeURL = (url) => {
       const langs = getLangCodeMap(url.lang);
       let pureURL = url.value;
-      for (let lang of langs) {
+      for (const lang of langs) {
         pureURL = pureURL.replace('/' + lang, '');
       }
       return pureURL;

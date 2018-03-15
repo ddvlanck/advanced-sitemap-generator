@@ -1,8 +1,8 @@
 module.exports = (code) => {
   const langs = {
-    'es': ['es', 'espanol', 'spanish'],
-    'en': ['en', 'english'],
-    'fr': ['fr', 'french']
+    'es': ['espanol', 'spanish', 'es'],
+    'en': ['english', 'en'],
+    'fr': ['french', 'fr']
   };
   return langs[code] ? langs[code] : [];
 };
