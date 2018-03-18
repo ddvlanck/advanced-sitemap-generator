@@ -10,6 +10,7 @@ const cld = require('cld');
 const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
 const compareUrls = require('compare-urls');
+const urlExists = require('url-exists');
 
 const createCrawler = require('./createCrawler');
 const SitemapRotator = require('./SitemapRotator');
@@ -176,26 +177,30 @@ module.exports = function SitemapGenerator(uri, opts) {
       let isExisted = cachedResultURLs.filter(function (item) {
         return compareUrls(urlObj.value, item.value);
       }).length;
-
-      if (isExisted) {
-        emitError(200, 'URL WAS CRAWLED BEFORE');
-        reject({});
-      }
-      else if (options.ignoreHreflang) {
-        cachedResultURLs.push(urlObj);
-        resolve(urlObj);
-      }
-      else {
-        detectUrlLang(urlObj).then(result => {
-          urlObj = result;
+      urlExists(url, function (err, isNotBroken) {
+        if (isExisted) {
+          emitError(200, 'URL WAS CRAWLED BEFORE');
+          reject({});
+        }
+        else if (!isNotBroken) {
+          emitError(404, 'URL IS BROKEN');
+          reject({});
+        }
+        else if (options.ignoreHreflang) {
           cachedResultURLs.push(urlObj);
           resolve(urlObj);
-        }).catch((error) => {
-          emitError(500, error.message);
-          reject(error);
-        });
-      }
-
+        }
+        else {
+          detectUrlLang(urlObj).then(result => {
+            urlObj = result;
+            cachedResultURLs.push(urlObj);
+            resolve(urlObj);
+          }).catch((error) => {
+            emitError(500, error.message);
+            reject(error);
+          });
+        }
+      });
     };
 
     if (depth > realCrawlingDepth) {
