@@ -297,6 +297,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           cb();
         }
       };
+
       if (options.recommendAlternatives) {
         recommendAlternatives();
       }

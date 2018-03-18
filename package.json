@@ -70,7 +70,8 @@
     "request": "^2.83.0",
     "simplecrawler": "1.1.6",
     "translate": "^1.0.2",
-    "url-parse": "1.2.0"
+    "url-parse": "1.2.0",
+    "valid-url": "^1.0.9"
   },
   "deprecated": false,
   "description": "Easily create XML sitemaps for your website.",
