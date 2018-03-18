@@ -244,7 +244,8 @@ module.exports = function SitemapGenerator(uri, opts) {
         }
 
         let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function (alter) {
-          return compareUrls(alter.value, url.value);
+          //IF THE URL WAS ADDED BEFORE OR THERE IS ANOTHER ONE FOR THIS LANG
+          return compareUrls(alter.value, url.value) || alter.lang === url.lang;
         }).length;
         if (url.alternatives.length === 0 || isSelfRefrencingAlternativeAddedBefore) {
           continue;
