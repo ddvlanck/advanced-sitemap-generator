@@ -88,7 +88,12 @@ module.exports = function SitemapGenerator(uri, opts) {
     cachedResultURLs = [];
     crawler.start();
     //Add initial URL
-    addURL(parsedUrl, 1);
+
+    addURL(parsedUrl, 1).then((urlObj) => {
+      emitter.emit('add', urlObj);
+    }).catch((error) => {
+      console.log(error);
+    });
   };
 
   const stop = () => {
