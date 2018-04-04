@@ -342,10 +342,10 @@ module.exports = function SitemapGenerator(uri, opts) {
     const {url, depth} = queueItem;
     // check if robots noindex is present
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
-      emitter.emit('ignore', url);
+      emitter.emit('ignore', queueItem);
     } else if (isValidURL(url)) {
       addURL(url, depth).then(() => {
-        emitter.emit('add', url);
+        emitter.emit('add', queueItem);
       }).catch((error) => {
         console.log(error);
       });
