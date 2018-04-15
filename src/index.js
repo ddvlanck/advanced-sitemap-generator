@@ -86,14 +86,11 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const start = () => {
     cachedResultURLs = [];
-    crawler.start();
-    //Add initial URL
 
-    addURL(parsedUrl, 1).then((urlObj) => {
-      emitter.emit('add', urlObj);
-    }).catch((error) => {
-      console.log(error);
-    });
+    //Add initial URL
+    const referrerQueueItem = {};
+    crawler.queueURL(uri, referrerQueueItem, false);
+    crawler.start();
   };
 
   const stop = () => {
