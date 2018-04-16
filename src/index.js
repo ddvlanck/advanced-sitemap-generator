@@ -33,7 +33,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     ignoreInvalidSSL: true,
     recommendAlternatives: false,
     timeout: 30000,
-    discoverResources,
     decodeResponses: true,
     lastMod: false,
     changeFreq: '',

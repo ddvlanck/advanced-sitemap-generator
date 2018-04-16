@@ -1,6 +1,7 @@
 const Crawler = require('simplecrawler');
 const has = require('lodash/has');
 
+const discoverResources = require('./discoverResources');
 const stringifyURL = require('./helpers/stringifyURL');
 
 module.exports = (uri, options = {}) => {
@@ -44,6 +45,7 @@ module.exports = (uri, options = {}) => {
     ? options.excludeURLs
     : exlcudeURLsArray
   ).join('|');
+
   const extRegex = new RegExp(`\\.(${exclude})$`, 'i');
   const urlRegex = new RegExp(`\\${excludeURLs}`, 'i');
 
@@ -62,6 +64,9 @@ module.exports = (uri, options = {}) => {
       }
     }
   });
+
+  // use custom discoverResources function
+  crawler.discoverResources = discoverResources;
 
   // set crawler options
   // see https://github.com/cgiffard/node-simplecrawler#configuration
