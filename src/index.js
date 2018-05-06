@@ -19,7 +19,6 @@ const extendFilename = require('./helpers/extendFilename');
 const validChangeFreq = require('./helpers/validChangeFreq');
 const getLangCodeMap = require('./helpers/getLangCodeMap');
 const isValidURL = require('./helpers/isValidURL');
-const discoverResources = require('./discoverResources');
 
 module.exports = function SitemapGenerator(uri, opts) {
   const defaultOpts = {
@@ -132,7 +131,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       }, function (err, response, body) {
 
         if (err) return reject(err);
-        const $ = cheerio.load(body)
+        const $ = cheerio.load(body);
 
         guessHTMLLang(body).then(lang => {
           urlObj.lang = lang;
@@ -350,6 +349,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       addURL(url, depth).then(() => {
         emitter.emit('add', queueItem);
       }).catch((error) => {
+        console.log('Error during addgin the following URL: ' + url);
         console.log(error);
       });
     } else {
