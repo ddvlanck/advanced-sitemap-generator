@@ -182,11 +182,11 @@ module.exports = function SitemapGenerator(uri, opts) {
       urlExists(url, function (err, isNotBroken) {
         if (isExisted) {
           emitError(200, 'URL WAS CRAWLED BEFORE');
-          reject({});
+          reject();
         }
         else if (!isNotBroken) {
           emitError(404, 'URL IS BROKEN');
-          reject({});
+          reject();
         }
         else if (options.ignoreHreflang) {
           cachedResultURLs.push(urlObj);
@@ -349,7 +349,10 @@ module.exports = function SitemapGenerator(uri, opts) {
       addURL(url, depth).then(() => {
         emitter.emit('add', queueItem);
       }).catch((error) => {
-        console.log('Error during addgin the following URL: ' + url);
+        if(!error){
+          return;
+        }
+        console.log('Error during adding the following URL: ' + url);
         console.log(error);
       });
     } else {
