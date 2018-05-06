@@ -176,11 +176,12 @@ module.exports = function SitemapGenerator(uri, opts) {
   const addURL = (url, depth) => {
     let urlObj = {value: url, depth: depth, flushed: false, alternatives: [], lang: 'en'};
     const init = (resolve, reject) => {
-      let isExisted = cachedResultURLs.filter(function (item) {
+      let existedURL = cachedResultURLs.filter(function (item) {
         return compareUrls(urlObj.value, item.value);
-      }).length;
+      });
       urlExists(url, function (err, isNotBroken) {
-        if (isExisted) {
+        if (existedURL.length) {
+          existedURL[0].depth = existedURL[0].depth > depth ? depth : existedURL[0].depth;
           emitError(200, 'URL WAS CRAWLED BEFORE');
           reject();
         }
