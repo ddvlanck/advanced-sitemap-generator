@@ -129,7 +129,9 @@ module.exports = function SitemapGenerator(uri, opts) {
       request({
         method: 'GET',
         url: urlObj.value.replace('https://', 'http://'),
-        timeout:  options.timeout,
+        timeout: options.timeout,
+        pool: {maxSockets: 100},
+        agent: false,
         headers: {
           accept: '*/*'
         }
@@ -355,7 +357,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       addURL(url, depth).then(() => {
         emitter.emit('add', queueItem);
       }).catch((error) => {
-        if(!error){
+        if (!error) {
           return;
         }
         console.log("========");
