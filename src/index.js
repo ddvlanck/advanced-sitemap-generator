@@ -1,5 +1,6 @@
 const fs = require('fs');
 const http = require('http');
+const https = require('http');
 const path = require('path');
 const parseURL = require('url-parse');
 const cpFile = require('cp-file');
@@ -31,7 +32,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     respectRobotsTxt: true,
     ignoreInvalidSSL: true,
     recommendAlternatives: false,
-    timeout: 30000,
+    timeout: 120000,
     decodeResponses: true,
     lastMod: false,
     changeFreq: '',
@@ -127,7 +128,11 @@ module.exports = function SitemapGenerator(uri, opts) {
     const init = (resolve, reject) => {
       request({
         method: 'GET',
-        url: urlObj.value
+        url: urlObj.value.replace('https://', 'http://'),
+        timeout:  options.timeout,
+        headers: {
+          accept: '*/*'
+        }
       }, function (err, response, body) {
 
         if (err) return reject(err);
@@ -353,8 +358,10 @@ module.exports = function SitemapGenerator(uri, opts) {
         if(!error){
           return;
         }
+        console.log("========");
         console.log('Error during adding the following URL: ' + url);
         console.log(error);
+        console.log("========");
       });
     } else {
       emitError('404', url);
