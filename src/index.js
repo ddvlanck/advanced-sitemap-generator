@@ -126,24 +126,13 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
   const detectUrlLang = (urlObj) => {
     const init = (resolve, reject) => {
-      request({
-        method: 'GET',
-        url: urlObj.value.replace('https://', 'http://'),
-        timeout: options.timeout,
-        pool: {maxSockets: 100},
-        agent: false,
-        headers: {
-          accept: '*/*'
-        }
-      }, function (err, response, body) {
-
-        if (err) return reject(err);
+      const onHTMLLoaded = (body) => {
         const $ = cheerio.load(body);
 
         guessHTMLLang(body).then(lang => {
           urlObj.lang = lang;
           // Extract all languages and urls from head
-          $('head').find('link[rel="alternate"]').each(function (i, elem) {
+          $('head').find('link[rel="alternate"]').each(function () {
             let hreflang = $(this).attr('hreflang');
             let hreflangUrl = $(this).attr('href');
 
@@ -163,10 +152,22 @@ module.exports = function SitemapGenerator(uri, opts) {
         }).catch((error) => {
           emitError(500, error.message);
         });
+      } ;
+
+      https.get(urlObj.value.replace('https://', 'http://'), (res) => {
+        let html = "";
+        res.on('data', (chunk) => {
+          html += chunk;
+        });
+        res.on('end', () => {
+          onHTMLLoaded(html);
+        });
+      }).on('error', (err) => {
+        return reject(err);
       });
     };
-    let promise = new Promise(init);
 
+    let promise = new Promise(init);
     return promise;
   }
 
