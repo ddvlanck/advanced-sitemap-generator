@@ -3,6 +3,7 @@ const has = require('lodash/has');
 
 const discoverResources = require('./discoverResources');
 const stringifyURL = require('./helpers/stringifyURL');
+const msg = require('./helpers/msg-helper');
 
 module.exports = (uri, options = {}) => {
   // excluded filetypes
@@ -38,12 +39,12 @@ module.exports = (uri, options = {}) => {
   ];
   let exlcudeURLsArray = ['/wp-json/'];
   const exclude = (options.excludeFileTypes
-    ? options.excludeFileTypes
-    : exlcudeDefaultArray
+      ? options.excludeFileTypes
+      : exlcudeDefaultArray
   ).join('|');
   const excludeURLs = (options.excludeURLs
-    ? options.excludeURLs
-    : exlcudeURLsArray
+      ? options.excludeURLs
+      : exlcudeURLsArray
   ).join('|');
 
   const extRegex = new RegExp(`\\.(${exclude})$`, 'i');
@@ -56,9 +57,7 @@ module.exports = (uri, options = {}) => {
       crawler[o] = options[o];
     } else if (o === 'crawlerMaxDepth') {
       // eslint-disable-next-line
-      console.warn(
-        'Option "crawlerMaxDepth" is deprecated. Please use "maxDepth".'
-      );
+      msg.warnings('Option "crawlerMaxDepth" is deprecated. Please use "maxDepth".');
       if (!options.maxDepth) {
         crawler.maxDepth = options.crawlerMaxDepth;
       }

@@ -1,17 +1,18 @@
 const fs = require('fs');
-const http = require('http');
-const https = require('http');
+const http = require('follow-redirects').http;
+const https = require('follow-redirects').https;
 const path = require('path');
 const parseURL = require('url-parse');
 const cpFile = require('cp-file');
 const cheerio = require('cheerio')
-const request = require('request');
+const urlParser = require('url');
 const normalizeUrl = require('normalize-url');
 const cld = require('cld');
 const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
 const compareUrls = require('compare-urls');
 const urlExists = require('url-exists');
+const async = require('async');
 
 const createCrawler = require('./createCrawler');
 const SitemapRotator = require('./SitemapRotator');
@@ -20,6 +21,7 @@ const extendFilename = require('./helpers/extendFilename');
 const validChangeFreq = require('./helpers/validChangeFreq');
 const getLangCodeMap = require('./helpers/getLangCodeMap');
 const isValidURL = require('./helpers/isValidURL');
+const msg = require('./helpers/msg-helper');
 
 module.exports = function SitemapGenerator(uri, opts) {
   const defaultOpts = {
@@ -27,6 +29,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     stripQuerystring: true,
     maxEntriesPerFile: 50000,
     maxDepth: 0,
+    maxConcurrency: 10,
     filepath: path.join(process.cwd(), 'sitemap.xml'),
     userAgent: 'Node/SitemapGenerator',
     respectRobotsTxt: true,
@@ -47,6 +50,10 @@ module.exports = function SitemapGenerator(uri, opts) {
   let cachedResultURLs = [];
   let realCrawlingDepth = 0;
   let savedOnDiskSitemapPaths = [];
+
+  let queuedItems = [];
+  let schadulerId = '';
+  let isCrawling = false;
 
   const stats = {
     add: 0,
@@ -84,6 +91,10 @@ module.exports = function SitemapGenerator(uri, opts) {
   const crawler = createCrawler(parsedUrl, options);
 
   const start = () => {
+    isCrawling = true;
+    clearInterval(schadulerId);
+    triggerSchadulers(options.interval);
+
     cachedResultURLs = [];
 
     //Add initial URL
@@ -124,46 +135,32 @@ module.exports = function SitemapGenerator(uri, opts) {
     let promise = new Promise(init);
     return promise;
   };
-  const detectUrlLang = (urlObj) => {
+  const detectUrlLang = (urlObj, body) => {
     const init = (resolve, reject) => {
-      const onHTMLLoaded = (body) => {
-        const $ = cheerio.load(body);
+      const $ = cheerio.load(body);
 
-        guessHTMLLang(body).then(lang => {
-          urlObj.lang = lang;
-          // Extract all languages and urls from head
-          $('head').find('link[rel="alternate"]').each(function () {
-            let hreflang = $(this).attr('hreflang');
-            let hreflangUrl = $(this).attr('href');
+      guessHTMLLang(body).then(lang => {
+        urlObj.lang = lang;
+        // Extract all languages and urls from head
+        $('head').find('link[rel="alternate"]').each(function () {
+          let hreflang = $(this).attr('hreflang');
+          let hreflangUrl = $(this).attr('href');
 
-            if (normalizeUrl(urlObj.value) === normalizeUrl(hreflangUrl)) {
-              // Update the original URL by it's main language
-              urlObj.lang = hreflang;
-            }
-            if (typeof hreflang !== typeof undefined && hreflang !== false) {
-              urlObj.alternatives.push({
-                value: hreflangUrl,
-                flushed: false,
-                lang: hreflang
-              });
-            }
-          });
-          resolve(urlObj);
-        }).catch((error) => {
-          emitError(500, error.message);
+          if (hreflangUrl !== '' && normalizeUrl(urlObj.value) === normalizeUrl(hreflangUrl)) {
+            // Update the original URL by it's main language
+            urlObj.lang = hreflang;
+          }
+          if (typeof hreflang !== typeof undefined && hreflang !== false && hreflangUrl !== '') {
+            urlObj.alternatives.push({
+              value: hreflangUrl,
+              flushed: false,
+              lang: hreflang
+            });
+          }
         });
-      } ;
-
-      https.get(urlObj.value.replace('https://', 'http://'), (res) => {
-        let html = "";
-        res.on('data', (chunk) => {
-          html += chunk;
-        });
-        res.on('end', () => {
-          onHTMLLoaded(html);
-        });
-      }).on('error', (err) => {
-        return reject(err);
+        resolve(urlObj);
+      }).catch((error) => {
+        reject(error);
       });
     };
 
@@ -181,13 +178,66 @@ module.exports = function SitemapGenerator(uri, opts) {
       url
     });
   };
+  const triggerSchadulers = (interv) => {
+    schadulerId = setInterval(() => {
+      if (!isCrawling && queuedItems.length === 0) {
+        return clearInterval(schadulerId);
+      } else if (isCrawling && queuedItems.length === 0) {
+        msg.info('WAITING FOR FETCHED URLs...');
+        return;
+      }
+      const items = queuedItems.splice(0, options.maxConcurrency);
+      for (const queueItem of items) {
+        const {url, depth, busy} = queueItem;
+        if (busy) {
+          msg.info('SKIPPING ' + url);
+          return;
+        }
+        queueItem.busy = true;
+        msg.yellowBright('ADDING PROCESS FOR: ' + url);
+        addURL(url, depth).then(() => {
+          msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
+          emitter.emit('add', queueItem);
+        }).catch((error) => {
+          if (!error) {
+            return;
+          }
+          msg.error("========");
+          msg.error('Error during adding the following URL: ' + url);
+          msg.error(error);
+          msg.error("========");
+        });
+      }
+    }, interv);
+  };
   const addURL = (url, depth) => {
     let urlObj = {value: url, depth: depth, flushed: false, alternatives: [], lang: 'en'};
-    const init = (resolve, reject) => {
-      let existedURL = cachedResultURLs.filter(function (item) {
-        return compareUrls(urlObj.value, item.value);
+
+    const getHTML = (done) => {
+      msg.yellow('RETRIEVING HTML FOR: ' + url);
+      var options = urlParser.parse(urlObj.value);
+      options.maxRedirects = 10;
+      const protocol = urlObj.value.indexOf('https://') !== -1 ? https : http;
+      protocol.get(options, (res) => {
+        let html = "";
+        res.on('data', (chunk) => {
+          html += chunk;
+        });
+        res.on('end', () => {
+          msg.green('HTML DOWNLOADED FOR: ' + url);
+          done(null, html);
+        });
+      }).on('error', (err) => {
+        done(err);
       });
-      urlExists(url, function (err, isNotBroken) {
+    };
+
+    const init = (resolve, reject) => {
+      const handleURL = (isNotBroken, body) => {
+        let existedURL = cachedResultURLs.filter(function (item) {
+          return compareUrls(urlObj.value, item.value);
+        });
+
         if (existedURL.length) {
           existedURL[0].depth = existedURL[0].depth > depth ? depth : existedURL[0].depth;
           emitError(200, 'URL WAS CRAWLED BEFORE');
@@ -202,7 +252,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           resolve(urlObj);
         }
         else {
-          detectUrlLang(urlObj).then(result => {
+          detectUrlLang(urlObj, body).then(result => {
             urlObj = result;
             cachedResultURLs.push(urlObj);
             resolve(urlObj);
@@ -211,7 +261,32 @@ module.exports = function SitemapGenerator(uri, opts) {
             reject(error);
           });
         }
+      };
+      urlExists(url, function (err, isNotBroken) {
+        getHTML(function (err, body) {
+          if (err) {
+            msg.error(err);
+            return;
+          }
+          const $ = cheerio.load(body);
+          let canonicalURL = '';
+          $('head').find('link[rel="canonical"]').each(function () {
+            canonicalURL = $(this).attr('href');
+          });
+          urlExists(canonicalURL, function (err, isCanNotBroken) {
+            if (isCanNotBroken) {
+              urlObj.value = canonicalURL;
+              getHTML(function (err, body) {
+                handleURL(isCanNotBroken, body);
+              });
+            }
+            else {
+              handleURL(isNotBroken, body);
+            }
+          });
+        });
       });
+
     };
 
     if (depth > realCrawlingDepth) {
@@ -270,6 +345,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
     }
     const init = () => {
+      isCrawling = false;
       const finish = () => {
         sitemap.finish();
 
@@ -327,8 +403,8 @@ module.exports = function SitemapGenerator(uri, opts) {
       //TODO: Refactor
       setTimeout(finish, 10000);
     };
-    // Wait extra 10 seconds to make sure that all pages were handled
-    setTimeout(init, 10000);
+    // Wait extra 30 seconds to make sure that all pages were handled
+    setTimeout(init, 30000);
   };
 
   crawler.on('fetch404', ({url}) => emitError(404, url));
@@ -350,22 +426,15 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   // fetch complete event
   crawler.on('fetchcomplete', (queueItem, page) => {
-    const {url, depth} = queueItem;
+    const {url} = queueItem;
+    msg.info('FETCH COMPLETE FOR ' + url);
     // check if robots noindex is present
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
       emitter.emit('ignore', queueItem);
     } else if (isValidURL(url)) {
-      addURL(url, depth).then(() => {
-        emitter.emit('add', queueItem);
-      }).catch((error) => {
-        if (!error) {
-          return;
-        }
-        console.log("========");
-        console.log('Error during adding the following URL: ' + url);
-        console.log(error);
-        console.log("========");
-      });
+      queueItem.busy = false;
+      queuedItems.push(queueItem);
+
     } else {
       emitError('404', url);
     }
