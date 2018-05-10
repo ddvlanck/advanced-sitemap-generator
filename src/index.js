@@ -214,7 +214,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     let urlObj = {value: url, depth: depth, flushed: false, alternatives: [], lang: 'en'};
 
     const getHTML = (done) => {
-      msg.yellow('RETRIEVING HTML FOR: ' + url);
+      msg.yellow('RETRIEVING HTML FOR: ' + urlObj.value);
       var options = urlParser.parse(urlObj.value);
       options.maxRedirects = 10;
       const protocol = urlObj.value.indexOf('https://') !== -1 ? https : http;
