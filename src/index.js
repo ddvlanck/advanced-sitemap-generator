@@ -34,6 +34,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     userAgent: 'Node/SitemapGenerator',
     respectRobotsTxt: true,
     ignoreInvalidSSL: true,
+    replaceByCanonical: true,
     recommendAlternatives: false,
     timeout: 120000,
     decodeResponses: true,
@@ -269,21 +270,26 @@ module.exports = function SitemapGenerator(uri, opts) {
             return;
           }
           const $ = cheerio.load(body);
-          let canonicalURL = '';
-          $('head').find('link[rel="canonical"]').each(function () {
-            canonicalURL = $(this).attr('href');
-          });
-          urlExists(canonicalURL, function (err, isCanNotBroken) {
-            if (isCanNotBroken) {
-              urlObj.value = canonicalURL;
-              getHTML(function (err, body) {
-                handleURL(isCanNotBroken, body);
-              });
-            }
-            else {
-              handleURL(isNotBroken, body);
-            }
-          });
+          if (options.replaceByCanonical) {
+            let canonicalURL = '';
+            $('head').find('link[rel="canonical"]').each(function () {
+              canonicalURL = $(this).attr('href');
+            });
+            urlExists(canonicalURL, function (err, isCanNotBroken) {
+              if (isCanNotBroken) {
+                urlObj.value = canonicalURL;
+                getHTML(function (err, body) {
+                  handleURL(isCanNotBroken, body);
+                });
+              }
+              else {
+                handleURL(isNotBroken, body);
+              }
+            });
+          } else {
+            handleURL(isNotBroken, body);
+          }
+
         });
       });
 
