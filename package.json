@@ -124,7 +124,7 @@
     ]
   },
   "main": "src/index.js",
-  "name": "sitemap-generator",
+  "name": "advanced-sitemap-generator",
   "prettier": {
     "singleQuote": true
   },
