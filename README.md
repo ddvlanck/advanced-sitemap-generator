@@ -20,7 +20,7 @@ Generates a sitemap by crawling your site. Uses streams to efficiently write the
 This module is available on [npm](https://www.npmjs.com/).
 
 ```
-$ npm install -S sitemap-generator
+$ npm install -S advanced-sitemap-generator
 ```
 
 This module is running only with Node.js and is not meant to be used in the browser.
@@ -28,7 +28,7 @@ This module is running only with Node.js and is not meant to be used in the brow
 ## Usage
 
 ```JavaScript
-const SitemapGenerator = require('sitemap-generator');
+const SitemapGenerator = require('advanced-sitemap-generator');
 
 // create generator
 const generator = SitemapGenerator('http://example.com', {
