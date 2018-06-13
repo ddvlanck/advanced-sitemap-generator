@@ -34,8 +34,8 @@
   "_requested": {
     "type": "git",
     "raw": "sitemap-generator@git+https://github.com/hazemhagrass/sitemap-generator.git",
-    "name": "sitemap-generator",
-    "escapedName": "sitemap-generator",
+    "name": "advanced-sitemap-generato",
+    "escapedName": "advanced-sitemap-generato",
     "rawSpec": "git+https://github.com/hazemhagrass/sitemap-generator.git",
     "saveSpec": "git+https://github.com/hazemhagrass/sitemap-generator.git",
     "fetchSpec": "https://github.com/hazemhagrass/sitemap-generator.git",
