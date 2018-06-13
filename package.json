@@ -1,9 +1,9 @@
 {
-  "_from": "git+https://github.com/hazemhagrass/sitemap-generator.git",
-  "_id": "sitemap-generator@8.0.0",
+  "_from": "advanced-sitemap-generator@1.0.0",
+  "_id": "advanced-sitemap-generator@1.0.0",
   "_inBundle": false,
   "_integrity": "sha1-Zoi/OEcL+Yu6zaZF60lukYLxqu4=",
-  "_location": "/sitemap-generator",
+  "_location": "/advanced-sitemap-generator",
   "_phantomChildren": {
     "asynckit": "0.4.0",
     "aws4": "1.6.0",
@@ -139,5 +139,5 @@
     "test": "jest",
     "test:watch": "npm test -- --watch"
   },
-  "version": "8.0.0"
+  "version": "1.0.0"
 }
