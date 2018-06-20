@@ -107,6 +107,10 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const stop = () => {
+    if(!isCrawling){
+      return;
+    }
+
     isCrawling = false;
     clearInterval(schadulerId);
     crawler.stop();
