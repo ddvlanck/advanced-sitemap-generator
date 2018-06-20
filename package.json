@@ -81,6 +81,16 @@
   "deprecated": false,
   "description": "Easily create XML sitemaps for your website.",
   "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-nodeunit": "^0.4.1",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-docco": "^0.3.3",
+    "grunt-shell": "^1.1.1",
+    "grunt-todos": "^0.3.0",
+    "jshint-stylish": "^1.0.0",
+    "load-grunt-tasks": "^2.0.0",
+    "time-grunt": "^1.0.0",
     "eslint": "4.19.1",
     "husky": "0.14.3",
     "jest": "22.4.3",
@@ -90,20 +100,6 @@
   "engines": {
     "node": ">=6"
   },
-  "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 6
-    },
-    "extends": "eslint:recommended",
-    "env": {
-      "node": true,
-      "jest": true
-    }
-  },
-  "files": [
-    "src",
-    "!**/__tests__"
-  ],
   "homepage": "https://github.com/hazemhagrass/sitemap-generator",
   "keywords": [
     "sitemap",
@@ -116,13 +112,6 @@
     "ecosystem:node"
   ],
   "license": "MIT",
-  "lint-staged": {
-    "*.js": [
-      "eslint --fix",
-      "prettier --write",
-      "git add"
-    ]
-  },
   "main": "src/index.js",
   "name": "advanced-sitemap-generator",
   "prettier": {
@@ -133,11 +122,7 @@
     "url": "git+https://github.com/hazemhagrass/sitemap-generator.git"
   },
   "scripts": {
-    "flow": "flow",
-    "lint": "eslint src",
-    "precommit": "lint-staged",
-    "test": "jest",
-    "test:watch": "npm test -- --watch"
+    "test": "grunt nodeunit",
   },
   "version": "1.2.1"
 }
