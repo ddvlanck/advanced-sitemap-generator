@@ -122,7 +122,7 @@
     "url": "git+https://github.com/hazemhagrass/sitemap-generator.git"
   },
   "scripts": {
-    "test": "grunt nodeunit",
+    "test": "grunt nodeunit"
   },
   "version": "1.3"
 }
