@@ -209,7 +209,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           return;
         }
         queueItem.busy = true;
-        msg.yellowBright('ADDING PROCESS FOR: ' + url);
+        // msg.yellowBright('ADDING PROCESS FOR: ' + url);
         addURL(url, depth).then(() => {
           msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
           emitter.emit('add', queueItem);
@@ -229,7 +229,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     let urlObj = { value: url, depth: depth, flushed: false, alternatives: [], lang: 'en' };
 
     const getHTML = (done) => {
-      msg.yellow('RETRIEVING HTML FOR: ' + urlObj.value);
+      // msg.yellow('RETRIEVING HTML FOR: ' + urlObj.value);
       var options = urlParser.parse(urlObj.value);
       options.maxRedirects = 10;
       const protocol = urlObj.value.indexOf('https://') !== -1 ? https : http;
@@ -239,7 +239,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           html += chunk;
         });
         res.on('end', () => {
-          msg.green('HTML DOWNLOADED FOR: ' + url);
+          // msg.green('HTML DOWNLOADED FOR: ' + url);
           done(null, html);
         });
       }).on('error', (err) => {
