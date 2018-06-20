@@ -1,8 +1,8 @@
-module.exports = () => {
-  const now = new Date();
-  const year = now.getFullYear();
+module.exports = (d) => {
+  const dt = d ? new Date(d) : new Date();
+  const year = dt.getFullYear();
   const month =
-    now.getMonth() + 1 < 10 ? `0${now.getMonth() + 1}` : now.getMonth() + 1;
-  const date = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
+    dt.getMonth() + 1 < 10 ? `0${dt.getMonth() + 1}` : dt.getMonth() + 1;
+  const date = dt.getDate() < 10 ? `0${dt.getDate()}` : dt.getDate();
   return `${year}-${month}-${date}`;
 };

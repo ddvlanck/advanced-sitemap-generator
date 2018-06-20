@@ -22,6 +22,7 @@ const validChangeFreq = require('./helpers/validChangeFreq');
 const getLangCodeMap = require('./helpers/getLangCodeMap');
 const isValidURL = require('./helpers/isValidURL');
 const msg = require('./helpers/msg-helper');
+const getCurrentDateTime = require('./helpers/getCurrentDateTime');
 
 module.exports = function SitemapGenerator(uri, opts) {
   const defaultOpts = {
@@ -40,7 +41,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     recommendAlternatives: false,
     timeout: 120000,
     decodeResponses: true,
-    lastMod: false,
+    lastModEnabled: true,
     changeFreq: '',
     priorityMap: []
   };
@@ -107,7 +108,7 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const stop = () => {
-    if(!isCrawling){
+    if (!isCrawling) {
       return;
     }
 
@@ -210,7 +211,8 @@ module.exports = function SitemapGenerator(uri, opts) {
         }
         queueItem.busy = true;
         // msg.yellowBright('ADDING PROCESS FOR: ' + url);
-        addURL(url, depth).then(() => {
+        const lastMod = options.lastModEnabled ? queueItem.stateData.headers['last-modified'] : null;
+        addURL(url, depth, lastMod).then(() => {
           msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
           emitter.emit('add', queueItem);
         }).catch((error) => {
@@ -225,8 +227,11 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
     }, interv);
   };
-  const addURL = (url, depth) => {
-    let urlObj = { value: url, depth: depth, flushed: false, alternatives: [], lang: 'en' };
+  const addURL = (url, depth, lastMod) => {
+    let urlObj = {
+      value: url, depth: depth, lastMod: getCurrentDateTime(lastMod),
+      flushed: false, alternatives: [], lang: 'en'
+    };
 
     const getHTML = (done) => {
       // msg.yellow('RETRIEVING HTML FOR: ' + urlObj.value);
@@ -446,7 +451,7 @@ module.exports = function SitemapGenerator(uri, opts) {
   // fetch complete event
   crawler.on('fetchcomplete', (queueItem, page) => {
     const { url } = queueItem;
-    msg.info('FETCH COMPLETE FOR ' + url);
+    // msg.info('FETCH COMPLETE FOR ' + url);
     // check if robots noindex is present
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
       emitter.emit('ignore', queueItem);

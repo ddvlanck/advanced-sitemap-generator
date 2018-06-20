@@ -3,7 +3,6 @@ const rand = require('crypto-random-string');
 const os = require('os');
 const fs = require('fs');
 const escapeUnsafe = require('./helpers/escapeUnsafe');
-const getCurrentDateTime = require('./helpers/getCurrentDateTime');
 
 module.exports = function SitemapStream() {
   const tmpPath = path.join(os.tmpdir(), `sitemap_${rand(10)}`);
@@ -27,16 +26,16 @@ module.exports = function SitemapStream() {
       pir = .6;
     }
     return pir;
-  }
+  };
 
   const addURL = url => {
     urls.push(url);
-  }
+  };
 
   const initXML = () => {
     stream.write('<?xml version="1.0" encoding="utf-8" standalone="yes" ?>');
     stream.write('\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" >');
-  }
+  };
 
   const flushURL = (url) => {
     url.flushed = true;
@@ -54,9 +53,9 @@ module.exports = function SitemapStream() {
     }
     stream.write(`\n    <changefreq>daily</changefreq>`);
     stream.write(`\n    <priority>` + getPiriorityFromDepth(url.depth) + `</priority>`);
-    stream.write(`\n    <lastmod>` + getCurrentDateTime() + `</lastmod>`);
+    stream.write(`\n    <lastmod>` + url.lastMod + `</lastmod>`);
     stream.write(`\n  </url>`);
-  }
+  };
   const flush = () => {
     initXML();
 
@@ -75,6 +74,6 @@ module.exports = function SitemapStream() {
     addURL,
     getPath,
     flush,
-    end,
+    end
   };
 };
