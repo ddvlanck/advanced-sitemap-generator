@@ -4,7 +4,7 @@ const https = require('follow-redirects').https;
 const path = require('path');
 const parseURL = require('url-parse');
 const cpFile = require('cp-file');
-const cheerio = require('cheerio')
+const cheerio = require('cheerio');
 const urlParser = require('url');
 const normalizeUrl = require('normalize-url');
 const cld = require('cld');
@@ -28,6 +28,8 @@ module.exports = function SitemapGenerator(uri, opts) {
     ignoreHreflang: true,
     stripQuerystring: true,
     maxEntriesPerFile: 50000,
+    filterByDomain: true,
+    ignoreWWWDomain: true,
     maxDepth: 0,
     maxConcurrency: 10,
     filepath: path.join(process.cwd(), 'sitemap.xml'),
@@ -70,7 +72,7 @@ module.exports = function SitemapGenerator(uri, opts) {
   });
   const getPaths = () => {
     return savedOnDiskSitemapPaths;
-  }
+  };
   // if changeFreq option was passed, check to see if the value is valid
   if (opts && opts.changeFreq) {
     options.changeFreq = validChangeFreq(opts.changeFreq);
@@ -105,26 +107,34 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const stop = () => {
+    isCrawling = false;
+    clearInterval(schadulerId);
     crawler.stop();
+
+    setTimeout(() => {
+      onCrawlerComplete();
+      msg.error('STOPPING THE CRAWLER');
+    }, 60000);
+
   };
   const createSitemapFromURLs = (urls) => {
     for (let urlObj of urls) {
       sitemap.addURL(urlObj);
     }
     onCrawlerComplete();
-  }
+  };
   const queueURL = url => {
     crawler.queueURL(url, undefined, false);
   };
 
   const guessHTMLLang = (html) => {
-    const $ = cheerio.load(html)
+    const $ = cheerio.load(html);
     const init = (resolve, reject) => {
       let lang = $('html').attr('lang') ? $('html').attr('lang') : '';
       if (lang !== '') {
         resolve(lang);
       } else {
-        cld.detect(html, {isHTML: true}, function (err, result) {
+        cld.detect(html, { isHTML: true }, function(err, result) {
           if (err) {
             reject(err);
           }
@@ -143,7 +153,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       guessHTMLLang(body).then(lang => {
         urlObj.lang = lang;
         // Extract all languages and urls from head
-        $('head').find('link[rel="alternate"]').each(function () {
+        $('head').find('link[rel="alternate"]').each(function() {
           let hreflang = $(this).attr('hreflang');
           let hreflangUrl = $(this).attr('href');
 
@@ -167,7 +177,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
     let promise = new Promise(init);
     return promise;
-  }
+  };
 
   // create sitemap stream
   const sitemap = SitemapRotator(options);
@@ -189,7 +199,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
       const items = queuedItems.splice(0, options.maxConcurrency);
       for (const queueItem of items) {
-        const {url, depth, busy} = queueItem;
+        const { url, depth, busy } = queueItem;
         if (busy) {
           msg.info('SKIPPING ' + url);
           return;
@@ -203,16 +213,16 @@ module.exports = function SitemapGenerator(uri, opts) {
           if (!error) {
             return;
           }
-          msg.error("========");
+          msg.error('========');
           msg.error('Error during adding the following URL: ' + url);
           msg.error(error);
-          msg.error("========");
+          msg.error('========');
         });
       }
     }, interv);
   };
   const addURL = (url, depth) => {
-    let urlObj = {value: url, depth: depth, flushed: false, alternatives: [], lang: 'en'};
+    let urlObj = { value: url, depth: depth, flushed: false, alternatives: [], lang: 'en' };
 
     const getHTML = (done) => {
       msg.yellow('RETRIEVING HTML FOR: ' + urlObj.value);
@@ -220,7 +230,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       options.maxRedirects = 10;
       const protocol = urlObj.value.indexOf('https://') !== -1 ? https : http;
       protocol.get(options, (res) => {
-        let html = "";
+        let html = '';
         res.on('data', (chunk) => {
           html += chunk;
         });
@@ -235,7 +245,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
     const init = (resolve, reject) => {
       const handleURL = (isNotBroken, body) => {
-        let existedURL = cachedResultURLs.filter(function (item) {
+        let existedURL = cachedResultURLs.filter(function(item) {
           return compareUrls(urlObj.value, item.value);
         });
 
@@ -263,8 +273,8 @@ module.exports = function SitemapGenerator(uri, opts) {
           });
         }
       };
-      urlExists(url, function (err, isNotBroken) {
-        getHTML(function (err, body) {
+      urlExists(url, function(err, isNotBroken) {
+        getHTML(function(err, body) {
           if (err) {
             msg.error(err);
             return;
@@ -272,13 +282,13 @@ module.exports = function SitemapGenerator(uri, opts) {
           const $ = cheerio.load(body);
           if (options.replaceByCanonical) {
             let canonicalURL = '';
-            $('head').find('link[rel="canonical"]').each(function () {
+            $('head').find('link[rel="canonical"]').each(function() {
               canonicalURL = $(this).attr('href');
             });
-            urlExists(canonicalURL, function (err, isCanNotBroken) {
+            urlExists(canonicalURL, function(err, isCanNotBroken) {
               if (isCanNotBroken) {
                 urlObj.value = canonicalURL;
-                getHTML(function (err, body) {
+                getHTML(function(err, body) {
                   handleURL(isCanNotBroken, body);
                 });
               }
@@ -292,7 +302,6 @@ module.exports = function SitemapGenerator(uri, opts) {
 
         });
       });
-
     };
 
     if (depth > realCrawlingDepth) {
@@ -320,7 +329,7 @@ module.exports = function SitemapGenerator(uri, opts) {
             continue;
           }
 
-          let isAlternativeAddedBefore = url.alternatives.filter(function (alter) {
+          let isAlternativeAddedBefore = url.alternatives.filter(function(alter) {
             return compareUrls(alter.value, otherURL.value);
           }).length;
 
@@ -335,7 +344,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           });
         }
 
-        let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function (alter) {
+        let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function(alter) {
           //IF THE URL WAS ADDED BEFORE OR THERE IS ANOTHER ONE FOR THIS LANG
           return compareUrls(alter.value, url.value) || alter.lang === url.lang;
         }).length;
@@ -349,7 +358,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           lang: url.lang
         });
       }
-    }
+    };
     const init = () => {
       isCrawling = false;
       const finish = () => {
@@ -413,9 +422,9 @@ module.exports = function SitemapGenerator(uri, opts) {
     setTimeout(init, 30000);
   };
 
-  crawler.on('fetch404', ({url}) => emitError(404, url));
-  crawler.on('fetchtimeout', ({url}) => emitError(408, url));
-  crawler.on('fetch410', ({url}) => emitError(410, url));
+  crawler.on('fetch404', ({ url }) => emitError(404, url));
+  crawler.on('fetchtimeout', ({ url }) => emitError(408, url));
+  crawler.on('fetch410', ({ url }) => emitError(410, url));
   crawler.on('fetcherror', (queueItem, response) =>
     emitError(response.statusCode, queueItem.url)
   );
@@ -428,11 +437,11 @@ module.exports = function SitemapGenerator(uri, opts) {
     }
   });
 
-  crawler.on('fetchdisallowed', ({url}) => emitter.emit('ignore', url));
+  crawler.on('fetchdisallowed', ({ url }) => emitter.emit('ignore', url));
 
   // fetch complete event
   crawler.on('fetchcomplete', (queueItem, page) => {
-    const {url} = queueItem;
+    const { url } = queueItem;
     msg.info('FETCH COMPLETE FOR ' + url);
     // check if robots noindex is present
     if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
