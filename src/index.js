@@ -339,13 +339,12 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
 
           let isAlternativeAddedBefore = url.alternatives.filter(function(alter) {
-            return compareUrls(alter.value, otherURL.value);
+            return compareUrls(alter.value, otherURL.value) || alter.lang === otherURL.lang;
           }).length;
 
           if (isAlternativeAddedBefore) {
             continue;
           }
-
           url.alternatives.push({
             value: otherURL.value,
             flushed: false,
