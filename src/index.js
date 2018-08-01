@@ -388,11 +388,12 @@ module.exports = function SitemapGenerator(uri, opts) {
               const newPath = extendFilename(sitemapPath, `_part${count}`);
               savedOnDiskSitemapPaths.push(newPath);
               // copy and remove tmp file
-              cpFile(tmpPath, newPath).then(() => {
+              (async () => {
+                await cpFile(tmpPath, newPath);
                 fs.unlink(tmpPath, () => {
                   done();
                 });
-              });
+              })();
 
               count += 1;
             },
@@ -408,13 +409,12 @@ module.exports = function SitemapGenerator(uri, opts) {
           );
         } else if (sitemaps.length) {
           savedOnDiskSitemapPaths.push(sitemapPath);
-          msg.green('MOVING SITEMAP TO THE TARGET DIR: ' + sitemapPath);
-          cpFile(sitemaps[0], sitemapPath).then((err) => {
-            if(err){
-              msg.error(err.message);
-            }
+
+          (async () => {
+            await cpFile(sitemaps[0], sitemapPath);
+            msg.green('MOVING SITEMAP TO THE TARGET DIR: ' + sitemapPath);
             fs.unlink(sitemaps[0], cb);
-          });
+          })();
         } else {
           cb();
         }
