@@ -321,7 +321,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     return promise;
   };
   const onCrawlerComplete = () => {
-    msg.green('CRAWLER COMPLETE CRAWLING THE WEBSITE');
     const getLangFreeURL = (url) => {
       const langs = getLangCodeMap(url.lang);
       let pureURL = url.value;
@@ -369,6 +368,8 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
     };
     const init = () => {
+      msg.green('CRAWLER COMPLETE CRAWLING THE WEBSITE');
+
       isCrawling = false;
       const finish = () => {
         sitemap.finish();
@@ -410,7 +411,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           msg.green('MOVING SITEMAP TO THE TARGET DIR: ' + sitemapPath);
           cpFile(sitemaps[0], sitemapPath).then((err) => {
             if(err){
-              msg.error(err);
+              msg.error(err.message);
             }
             fs.unlink(sitemaps[0], cb);
           });
