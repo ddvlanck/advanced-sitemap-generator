@@ -3,9 +3,12 @@ const rand = require('crypto-random-string');
 const os = require('os');
 const fs = require('fs');
 const escapeUnsafe = require('./helpers/escapeUnsafe');
+const msg = require('./helpers/msg-helper');
 
 module.exports = function SitemapStream() {
   const tmpPath = path.join(os.tmpdir(), `sitemap_${rand(10)}`);
+  msg.info('USING TMP PATH TO SAVE SITEMAP: ' + tmpPath);
+
   const stream = fs.createWriteStream(tmpPath);
   const urls = [];
 

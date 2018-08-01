@@ -321,6 +321,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     return promise;
   };
   const onCrawlerComplete = () => {
+    msg.green('CRAWLER COMPLETE CRAWLING THE WEBSITE');
     const getLangFreeURL = (url) => {
       const langs = getLangCodeMap(url.lang);
       let pureURL = url.value;
@@ -406,7 +407,11 @@ module.exports = function SitemapGenerator(uri, opts) {
           );
         } else if (sitemaps.length) {
           savedOnDiskSitemapPaths.push(sitemapPath);
-          cpFile(sitemaps[0], sitemapPath).then(() => {
+          msg.green('MOVING SITEMAP TO THE TARGET DIR: ' + sitemapPath);
+          cpFile(sitemaps[0], sitemapPath).then((err) => {
+            if(err){
+              msg.error(err);
+            }
             fs.unlink(sitemaps[0], cb);
           });
         } else {
