@@ -10,7 +10,6 @@ const normalizeUrl = require('normalize-url');
 const cld = require('cld');
 const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
-const compareUrls = require('compare-urls');
 const urlExists = require('url-exists');
 const async = require('async');
 
@@ -26,7 +25,6 @@ const getCurrentDateTime = require('./helpers/getCurrentDateTime');
 
 module.exports = function SitemapGenerator(uri, opts) {
   const defaultOpts = {
-    ignoreHreflang: true,
     stripQuerystring: true,
     maxEntriesPerFile: 50000,
     filterByDomain: true,
@@ -292,14 +290,11 @@ module.exports = function SitemapGenerator(uri, opts) {
               emitError(200, 'URL WAS CRAWLED BEFORE');
               reject();
             }
-            else if (existedURL.length === 0 && options.ignoreHreflang) {
+            else if (existedURL.length === 0) {
               cachedResultURLs.push(urlObj);
               resolve(urlObj);
             }
-            else if (existedURL.length && !options.ignoreHreflang) {
-              emitError(200, 'URL WAS CRAWLED BEFORE');
-              reject();
-            }
+
           }).catch((error) => {
             emitError(500, error.message);
             reject(error);
