@@ -43,7 +43,8 @@ module.exports = function SitemapGenerator(uri, opts) {
     decodeResponses: true,
     lastModEnabled: true,
     changeFreq: '',
-    priorityMap: []
+    priorityMap: [],
+    forcedURLs: []
   };
   if (!uri) {
     throw new Error('Requires a valid URL.');
@@ -74,6 +75,14 @@ module.exports = function SitemapGenerator(uri, opts) {
   const getPaths = () => {
     return savedOnDiskSitemapPaths;
   };
+  const addBaseSitemapURLs = () => {
+    for (const url of options.forcedURLs) {
+      url.depth = 100;
+      url.flushed = false;
+      url.lastMod = '';
+      cachedResultURLs.push(url);
+    }
+  };
   // if changeFreq option was passed, check to see if the value is valid
   if (opts && opts.changeFreq) {
     options.changeFreq = validChangeFreq(opts.changeFreq);
@@ -100,10 +109,10 @@ module.exports = function SitemapGenerator(uri, opts) {
     triggerSchadulers(options.interval);
 
     cachedResultURLs = [];
+    addBaseSitemapURLs();
 
     //Add initial URL
-    const referrerQueueItem = {};
-    crawler.queueURL(uri, referrerQueueItem, false);
+    crawler.queueURL(uri, {}, true);
     crawler.start();
   };
 
@@ -160,9 +169,9 @@ module.exports = function SitemapGenerator(uri, opts) {
         // Extract all languages and urls from head
         $('head').find('link[rel="alternate"]').each(function() {
           let hreflang = $(this).attr('hreflang');
-          let hreflangUrl = $(this).attr('href');
+          let hreflangUrl = $(this).attr('href').replace('\n', '').trim();
 
-          if (hreflangUrl !== '' && normalizeUrl(urlObj.value) === normalizeUrl(hreflangUrl)) {
+          if (hreflangUrl !== '' && normalizeUrl(urlObj.value, { normalizeHttps: true }) === normalizeUrl(hreflangUrl, { normalizeHttps: true })) {
             // Update the original URL by it's main language
             urlObj.lang = hreflang;
           }
@@ -228,6 +237,8 @@ module.exports = function SitemapGenerator(uri, opts) {
     }, interv);
   };
   const addURL = (url, depth, lastMod) => {
+    url = url.trim().replace('\n', '');
+    msg.info('ADDING: ' + url);
     let urlObj = {
       value: url, depth: depth, lastMod: getCurrentDateTime(lastMod),
       flushed: false, alternatives: [], lang: 'en'
@@ -253,29 +264,42 @@ module.exports = function SitemapGenerator(uri, opts) {
     };
 
     const init = (resolve, reject) => {
-      const handleURL = (isNotBroken, body) => {
-        let existedURL = cachedResultURLs.filter(function(item) {
-          return compareUrls(urlObj.value, item.value);
-        });
-
-        if (existedURL.length) {
-          existedURL[0].depth = existedURL[0].depth > depth ? depth : existedURL[0].depth;
-          emitError(200, 'URL WAS CRAWLED BEFORE');
-          reject();
+      const mergeURLObj = (from, to) => {
+        to.depth = to.depth > from.depth ? depth : from.depth;
+        to.lastMod = to.lastMod === '' ? from.lastMod : to.lastMod;
+        for (const fromAlter of from.alternatives) {
+          const isExisted = to.alternatives.filter((item) => {
+            return normalizeUrl(item.value, { normalizeHttps: true }) === normalizeUrl(fromAlter.value, { normalizeHttps: true });
+          }).length;
+          if (!isExisted) {
+            to.alternatives.push(fromAlter);
+          }
         }
-        else if (!isNotBroken) {
+      };
+      const handleURL = (isNotBroken, body) => {
+        if (!isNotBroken) {
           emitError(404, 'URL IS BROKEN');
           reject();
-        }
-        else if (options.ignoreHreflang) {
-          cachedResultURLs.push(urlObj);
-          resolve(urlObj);
-        }
-        else {
+        } else {
           detectUrlLang(urlObj, body).then(result => {
             urlObj = result;
-            cachedResultURLs.push(urlObj);
-            resolve(urlObj);
+            let existedURL = cachedResultURLs.filter(function(item) {
+              return normalizeUrl(urlObj.value, { normalizeHttps: true }) === normalizeUrl(item.value, { normalizeHttps: true });
+            });
+
+            if (existedURL.length) {
+              mergeURLObj(urlObj, existedURL[0]);
+              emitError(200, 'URL WAS CRAWLED BEFORE');
+              reject();
+            }
+            else if (existedURL.length === 0 && options.ignoreHreflang) {
+              cachedResultURLs.push(urlObj);
+              resolve(urlObj);
+            }
+            else if (existedURL.length && !options.ignoreHreflang) {
+              emitError(200, 'URL WAS CRAWLED BEFORE');
+              reject();
+            }
           }).catch((error) => {
             emitError(500, error.message);
             reject(error);
@@ -292,7 +316,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           if (options.replaceByCanonical) {
             let canonicalURL = '';
             $('head').find('link[rel="canonical"]').each(function() {
-              canonicalURL = $(this).attr('href');
+              canonicalURL = $(this).attr('href').replace('\n', '').trim();
             });
             urlExists(canonicalURL, function(err, isCanNotBroken) {
               if (isCanNotBroken) {
@@ -339,7 +363,8 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
 
           let isAlternativeAddedBefore = url.alternatives.filter(function(alter) {
-            return compareUrls(alter.value, otherURL.value) || alter.lang === otherURL.lang;
+
+            return (normalizeUrl(alter.value, { normalizeHttps: true }) === normalizeUrl(otherURL.value, { normalizeHttps: true })) || alter.lang === otherURL.lang;
           }).length;
 
           if (isAlternativeAddedBefore) {
@@ -354,7 +379,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
         let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function(alter) {
           //IF THE URL WAS ADDED BEFORE OR THERE IS ANOTHER ONE FOR THIS LANG
-          return compareUrls(alter.value, url.value) || alter.lang === url.lang;
+          return (normalizeUrl(alter.value, { normalizeHttps: true }) === normalizeUrl(url.value, { normalizeHttps: true })) || alter.lang === url.lang;
         }).length;
         if (url.alternatives.length === 0 || isSelfRefrencingAlternativeAddedBefore) {
           continue;
@@ -432,6 +457,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       //TODO: Refactor
       setTimeout(finish, 10000);
     };
+
     // Wait extra 30 seconds to make sure that all pages were handled
     setTimeout(init, 30000);
   };
@@ -439,6 +465,8 @@ module.exports = function SitemapGenerator(uri, opts) {
   crawler.on('fetch404', ({ url }) => emitError(404, url));
   crawler.on('fetchtimeout', ({ url }) => emitError(408, url));
   crawler.on('fetch410', ({ url }) => emitError(410, url));
+  crawler.on('invaliddomain', ({ url }) => emitError(403, url));
+
   crawler.on('fetcherror', (queueItem, response) =>
     emitError(response.statusCode, queueItem.url)
   );
