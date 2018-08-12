@@ -1,8 +1,9 @@
 const url = require('url');
 const cheerio = require('cheerio');
 
-module.exports = (buffer, queueItem) => {
-  const $ = cheerio.load(buffer.toString('utf8'));
+let browser = null;
+const discoverWithCheerio = (buffer, queueItem) => {
+  const $ = cheerio.load(buffer.body ? buffer.body : buffer.toString('utf8'));
 
   const metaRobots = $('meta[name="robots"]');
 
@@ -53,9 +54,43 @@ module.exports = (buffer, queueItem) => {
         href = url.resolve(queueItem.url, href);
       }
     }
-
     return href;
   });
-
   return links.get();
+};
+const discoverWithHeadlessBrowser = async (buffer, queueItem) => {
+  const getHTML = async (url) => {
+    const page = await browser.newPage();
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en'
+    });
+
+    const result = { url: url, body: '', endURL: url };
+    try {
+      await page.goto(url, {
+        waitLoad: true,
+        waitNetworkIdle: true,
+        timeout: 3000000
+      });
+      await page.waitFor(15000);
+      result.body = await page.evaluate('new XMLSerializer().serializeToString(document.doctype) + document.documentElement.outerHTML');
+      result.endURL = await page.evaluate('window.location.origin');
+      await page.close();
+
+    } catch (ex) {
+      console.log(ex);
+      return done(ex, null);
+    }
+    return result;
+  };
+
+  const url = queueItem.url;
+  const data = await getHTML(url);
+  console.log('PUPPETTEER: ' + url);
+
+  return discoverWithCheerio(data, queueItem);
+};
+module.exports = (optionalBrowser) => {
+  browser = optionalBrowser;
+  return browser ? discoverWithHeadlessBrowser : discoverWithCheerio;
 };

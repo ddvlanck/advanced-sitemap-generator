@@ -5,7 +5,7 @@ const discoverResources = require('./discoverResources');
 const stringifyURL = require('./helpers/stringifyURL');
 const msg = require('./helpers/msg-helper');
 
-module.exports = (uri, options = {}) => {
+module.exports = (uri, options = {}, browser) => {
   // excluded filetypes
   let exlcudeDefaultArray = [
     'gif',
@@ -65,7 +65,7 @@ module.exports = (uri, options = {}) => {
   });
 
   // use custom discoverResources function
-  crawler.discoverResources = discoverResources;
+  crawler.discoverResources = discoverResources();
 
   // set crawler options
   // see https://github.com/cgiffard/node-simplecrawler#configuration

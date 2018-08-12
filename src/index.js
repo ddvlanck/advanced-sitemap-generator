@@ -12,6 +12,8 @@ const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
 const urlExists = require('url-exists');
 const async = require('async');
+puppeteer = require('puppeteer');
+const discoverResources = require('./discoverResources');
 
 const createCrawler = require('./createCrawler');
 const SitemapRotator = require('./SitemapRotator');
@@ -54,9 +56,10 @@ module.exports = function SitemapGenerator(uri, opts) {
   let realCrawlingDepth = 0;
   let savedOnDiskSitemapPaths = [];
 
-  let queuedItems = [];
   let schadulerId = '';
   let isCrawling = false;
+
+  let crawler = null;
 
   const stats = {
     add: 0,
@@ -99,8 +102,6 @@ module.exports = function SitemapGenerator(uri, opts) {
   // we don't care about invalid certs
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-  const crawler = createCrawler(parsedUrl, options);
-
   const start = () => {
     isCrawling = true;
     clearInterval(schadulerId);
@@ -110,7 +111,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     addBaseSitemapURLs();
 
     //Add initial URL
-    crawler.queueURL(uri, {}, true);
+    queueURL(uri, {}, true);
     crawler.start();
   };
 
@@ -135,8 +136,11 @@ module.exports = function SitemapGenerator(uri, opts) {
     }
     onCrawlerComplete();
   };
-  const queueURL = url => {
-    crawler.queueURL(url, undefined, false);
+  const queueURL = (url, referrer, force) => {
+    const result = crawler.queueURL(url, referrer, force);
+    if (result) {
+      msg.info('NEW ITEM ADDED TO THE QUEUE MANUALLY: ' + url);
+    }
   };
 
   const guessHTMLLang = (html) => {
@@ -203,10 +207,13 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
   const triggerSchadulers = (interv) => {
     schadulerId = setInterval(() => {
+      const queuedItems = crawler.queue.filter((item) => {
+        return !item.visited && item.fetched === true;
+      });
       if (!isCrawling && queuedItems.length === 0) {
         return clearInterval(schadulerId);
       } else if (isCrawling && queuedItems.length === 0) {
-        msg.info('WAITING FOR FETCHED URLs...');
+        msg.info('ORIGINAL QUEUE CONTAINS ' + crawler.queue.length + '. HOWEVER, WAITING FOR READY FETCHED URLs TO WORK ON..');
         return;
       }
       const items = queuedItems.splice(0, options.maxConcurrency);
@@ -220,9 +227,12 @@ module.exports = function SitemapGenerator(uri, opts) {
         // msg.yellowBright('ADDING PROCESS FOR: ' + url);
         const lastMod = options.lastModEnabled ? queueItem.stateData.headers['last-modified'] : null;
         addURL(url, depth, lastMod).then(() => {
+          queueItem.visited = true;
           msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
           emitter.emit('add', queueItem);
         }).catch((error) => {
+          queueItem.visited = true;
+
           if (!error) {
             return;
           }
@@ -453,55 +463,77 @@ module.exports = function SitemapGenerator(uri, opts) {
       setTimeout(finish, 10000);
     };
 
-    // Wait extra 30 seconds to make sure that all pages were handled
-    setTimeout(init, 30000);
+    // Wait extra 60 seconds to make sure that all pages were handled
+    setTimeout(init, 60000);
   };
 
-  crawler.on('fetch404', ({ url }) => emitError(404, url));
-  crawler.on('fetchtimeout', ({ url }) => emitError(408, url));
-  crawler.on('fetch410', ({ url }) => emitError(410, url));
-  crawler.on('invaliddomain', ({ url }) => emitError(403, url));
+  const init = async () => {
+    const browser = options.deep ? await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] }) : null;
+    crawler = createCrawler(parsedUrl, options, browser);
 
-  crawler.on('fetcherror', (queueItem, response) =>
-    emitError(response.statusCode, queueItem.url)
-  );
+    crawler.on('fetch404', ({ url }) => emitError(404, url));
+    crawler.on('fetchtimeout', ({ url }) => emitError(408, url));
+    crawler.on('fetch410', ({ url }) => emitError(410, url));
+    crawler.on('invaliddomain', ({ url }) => emitError(403, url));
+    crawler.on('fetchprevented', ({ url }) => emitError(403, url));
 
-  crawler.on('fetchclienterror', (queueError, errorData) => {
-    if (errorData.code === 'ENOTFOUND') {
-      throw new Error(`Site "${parsedUrl.href}" could not be found.`);
-    } else {
-      emitError(400, errorData.message);
-    }
-  });
+    crawler.on('queueduplicate', ({ url }) => emitError(500, url));
+    crawler.on('queueerror', ({ url }) => emitError(500, url));
+    crawler.on('fetchconditionerror', ({ url }) => emitError(500, url));
 
-  crawler.on('fetchdisallowed', ({ url }) => emitter.emit('ignore', url));
+    crawler.on('fetcherror', (queueItem, response) =>
+      emitError(response.statusCode, queueItem.url)
+    );
 
-  // fetch complete event
-  crawler.on('fetchcomplete', (queueItem, page) => {
-    const { url } = queueItem;
-    // msg.info('FETCH COMPLETE FOR ' + url);
-    // check if robots noindex is present
-    if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
-      emitter.emit('ignore', queueItem);
-    } else if (isValidURL(url)) {
+    crawler.on('fetchclienterror', (queueError, errorData) => {
+      if (errorData.code === 'ENOTFOUND') {
+        throw new Error(`Site "${parsedUrl.href}" could not be found.`);
+      } else {
+        emitError(400, errorData.message);
+      }
+    });
+
+    crawler.on('fetchdisallowed', ({ url }) => emitter.emit('ignore', url));
+
+    // fetch complete event
+    crawler.on('fetchcomplete', (queueItem, page) => {
+      const { url } = queueItem;
       queueItem.busy = false;
-      queuedItems.push(queueItem);
+      queueItem.visited = false;
 
-    } else {
-      emitError('404', url);
-    }
-  });
+      // msg.info('FETCH COMPLETE FOR ' + url);
+      // check if robots noindex is present
+      if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
+        emitter.emit('ignore', queueItem);
+      } else if (isValidURL(url)) {
+        (async () => {
+          if (options.deep) {
+            const links = await discoverResources(browser)(null, queueItem);
+            for (const link of links) {
+              queueURL(link, queueItem, false);
+            }
+          }
+        })();
+      } else {
+        emitError('404', url);
+      }
+    });
 
-  crawler.on('complete', onCrawlerComplete);
-  emitter.on('add', (queueItem, page) => {
-    stats.add++;
-  });
-  emitter.on('ignore', (queueItem, page) => {
-    stats.ignore++;
-  });
-  emitter.on('error', (queueItem, page) => {
-    stats.error++;
-  });
+    crawler.on('complete', onCrawlerComplete);
+    emitter.on('add', (queueItem, page) => {
+      stats.add++;
+    });
+    emitter.on('ignore', (queueItem, page) => {
+      stats.ignore++;
+    });
+    emitter.on('error', (queueItem, page) => {
+      stats.error++;
+    });
+  };
+  (async () => {
+    await init();
+    emitter.emit('ready');
+  })();
 
   return {
     getStats,
