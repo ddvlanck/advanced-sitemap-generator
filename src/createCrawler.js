@@ -1,4 +1,5 @@
 const Crawler = require('simplecrawler');
+const URLParser = require('url');
 const has = require('lodash/has');
 
 const discoverResources = require('./discoverResources');
@@ -73,22 +74,24 @@ module.exports = (uri, options = {}) => {
   crawler.initialProtocol = uri.protocol.replace(':', '');
 
   // restrict to subpages if path is provided
-  crawler.addFetchCondition(parsedUrl => {
+  crawler.addFetchCondition((parsedUrl, referrer, done) => {
     const initialURLRegex = new RegExp(`${uri.pathname}.*`);
-    return stringifyURL(parsedUrl).match(initialURLRegex);
+    done(stringifyURL(parsedUrl).match(initialURLRegex));
   });
 
   //PREFIX CONDITION IF INITIAL DOMAIN CHANGE IS NOT ALLOWED AND HOST PARAM BEEN SENT
   if (options.host && !options.allowInitialDomainChange) {
-    crawler.addFetchCondition(parsedUrl => {
-      const pureURL = options.host.replace('https://', '').replace('http://', '').replace('wwww.', '');
-      return stringifyURL(parsedUrl).indexOf(pureURL !== -1);
+    msg.blue('ADDING CONDITION TO PREVENT FETCHING OTHER DOMAINS');
+    crawler.addFetchCondition((parsedUrl, referrer, done) => {
+      const samePrefix = stringifyURL(parsedUrl).indexOf(options.host) !== -1;
+      const sameDomain = uri.hostname === parsedUrl.hostname;
+      done(samePrefix && sameDomain);
     });
   }
 
   // file type and urls exclusion
-  crawler.addFetchCondition(parsedUrl => {
-    return !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex);
+  crawler.addFetchCondition((parsedUrl, referrer, done) => {
+    done(!parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex));
   });
 
   return crawler;
