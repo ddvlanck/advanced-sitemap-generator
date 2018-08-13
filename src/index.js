@@ -212,8 +212,9 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
   const triggerSchadulers = (interv) => {
     schadulerId = setInterval(() => {
+
       const queuedItems = crawler.queue.filter((item) => {
-        return !item.visited && item.fetched === true;
+        return !item.visited && !item.busy && item.fetched === true;
       });
       if (!isCrawling && queuedItems.length === 0) {
         return clearInterval(schadulerId);
@@ -458,6 +459,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
 
       for (let url of cachedResultURLs) {
+        msg.blue('FLUSHING: ' + url.value);
         sitemap.addURL(url);
       }
       sitemap.flush();

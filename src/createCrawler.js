@@ -78,6 +78,14 @@ module.exports = (uri, options = {}, browser) => {
     return stringifyURL(parsedUrl).match(initialURLRegex);
   });
 
+  //PREFIX CONDITION IF INITIAL DOMAIN CHANGE IS NOT ALLOWED AND HOST PARAM BEEN SENT
+  if (options.host && !options.allowInitialDomainChange) {
+    crawler.addFetchCondition(parsedUrl => {
+      const initialURLRegex = new RegExp(`${options.host}.*`);
+      return stringifyURL(parsedUrl).match(initialURLRegex);
+    });
+  }
+
   // file type and urls exclusion
   crawler.addFetchCondition(parsedUrl => {
     return !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex);
