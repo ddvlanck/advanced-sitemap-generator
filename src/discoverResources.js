@@ -1,5 +1,6 @@
 const url = require('url');
 const cheerio = require('cheerio');
+const superagent = require('superagent-interface-promise');
 
 let browser = null;
 const discoverWithCheerio = (buffer, queueItem) => {
@@ -59,7 +60,7 @@ const discoverWithCheerio = (buffer, queueItem) => {
   });
   return links.get();
 };
-const getHTML = async (url) => {
+const getHTMLWithHeadlessBrowser = async (url) => {
   const page = await browser.newPage();
   await page.setExtraHTTPHeaders({
     'Accept-Language': 'en'
@@ -82,11 +83,13 @@ const getHTML = async (url) => {
   }
   return result;
 };
+const getHTML = async (url) => {
+  return superagent.get(url);
+};
 const discoverWithHeadlessBrowser = async (buffer, queueItem) => {
 
-
   const url = queueItem.url;
-  const data = await getHTML(url);
+  const data = await getHTMLWithHeadlessBrowser(url);
   console.log('PUPPETTEER: ' + url);
 
   return discoverWithCheerio(data, queueItem);
@@ -95,6 +98,7 @@ module.exports = (optionalBrowser) => {
   browser = optionalBrowser;
   return {
     getLinks: browser ? discoverWithHeadlessBrowser : discoverWithCheerio,
-    getHTML: getHTML
+    getHTML: getHTML,
+    getHTMLWithHeadlessBrowser: getHTMLWithHeadlessBrowser
   };
 };

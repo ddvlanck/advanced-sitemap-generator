@@ -175,7 +175,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           let type = $(this).attr('type');
           let hreflangUrl = $(this).attr('href').replace('\n', '').trim();
 
-          if(type === 'application/rss+xml'){
+          if (type === 'application/rss+xml') {
             return;
           }
           if (hreflangUrl !== '' && normalizeUrl(urlObj.value, { normalizeHttps: true }) === normalizeUrl(hreflangUrl, { normalizeHttps: true })) {
@@ -266,9 +266,8 @@ module.exports = function SitemapGenerator(uri, opts) {
       flushed: false, alternatives: [], lang: 'en'
     };
 
-    const getHTML = async () => {
-      const html = await discoverResources(browser).getHTML(urlObj.value);
-      return html.body;
+    const getHTML = () => {
+      return discoverResources(browser).getHTML(urlObj.value);
     };
 
     const init = (resolve, reject) => {
@@ -312,29 +311,33 @@ module.exports = function SitemapGenerator(uri, opts) {
         }
       };
 
-
       (async () => {
         urlExists(url, async function(err, isNotBroken) {
-          let body = await getHTML();
-          const $ = cheerio.load(body);
-          if (options.replaceByCanonical) {
-            let canonicalURL = '';
-            $('head').find('link[rel="canonical"]').each(function() {
-              canonicalURL = $(this).attr('href').replace('\n', '').trim();
-            });
-            urlExists(canonicalURL, async function(err, isCanNotBroken) {
-              if (isCanNotBroken) {
-                urlObj.value = canonicalURL;
-                body = await getHTML();
-                handleURL(isCanNotBroken, body);
-              }
-              else {
-                handleURL(isNotBroken, body);
-              }
-            });
-          } else {
-            handleURL(isNotBroken, body);
-          }
+          getHTML().then((res) => {
+            let body = res.text;
+            const $ = cheerio.load(body);
+            if (options.replaceByCanonical) {
+              let canonicalURL = '';
+              $('head').find('link[rel="canonical"]').each(function() {
+                canonicalURL = $(this).attr('href').replace('\n', '').trim();
+              });
+              urlExists(canonicalURL, async function(err, isCanNotBroken) {
+                if (isCanNotBroken) {
+                  urlObj.value = canonicalURL;
+                  getHTML().then((res) => {
+                    body = res.text;
+                    handleURL(isCanNotBroken, body);
+                  });
+                }
+                else {
+                  handleURL(isNotBroken, body);
+                }
+              });
+            } else {
+              handleURL(isNotBroken, body);
+            }
+          });
+
         });
       })();
 
