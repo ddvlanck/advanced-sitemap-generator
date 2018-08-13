@@ -232,7 +232,7 @@ module.exports = function SitemapGenerator(uri, opts) {
         queueItem.busy = true;
         // msg.yellowBright('ADDING PROCESS FOR: ' + url);
         const lastMod = options.lastModEnabled ? queueItem.stateData.headers['last-modified'] : null;
-        addURL(url, depth, lastMod).then(() => {
+        addURL(queueItem, lastMod).then(() => {
           queueItem.visited = true;
           queueItem.busy = false;
           msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
@@ -253,13 +253,10 @@ module.exports = function SitemapGenerator(uri, opts) {
       }, (error) => {
 
       });
-
-      for (const queueItem of items) {
-
-      }
     }, interv);
   };
-  const addURL = (url, depth, lastMod) => {
+  const addURL = (queueItem, lastMod) => {
+    let { url, depth } = queueItem;
     url = url.trim().replace('\n', '');
     msg.info('ADDING: ' + url);
     let urlObj = {
@@ -324,11 +321,7 @@ module.exports = function SitemapGenerator(uri, opts) {
               });
               urlExists(canonicalURL, async function(err, isCanNotBroken) {
                 if (isCanNotBroken) {
-                  urlObj.value = canonicalURL;
-                  getHTML().then((res) => {
-                    body = res.text;
-                    handleURL(isCanNotBroken, body);
-                  });
+                  queueURL(canonicalURL, queueItem, false);
                 }
                 else {
                   handleURL(isNotBroken, body);

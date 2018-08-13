@@ -76,22 +76,21 @@ module.exports = (uri, options = {}) => {
   // restrict to subpages if path is provided
   crawler.addFetchCondition((parsedUrl, referrer, done) => {
     const initialURLRegex = new RegExp(`${uri.pathname}.*`);
-    done(stringifyURL(parsedUrl).match(initialURLRegex));
+    // console.log(1, uri.pathname, stringifyURL(parsedUrl), stringifyURL(parsedUrl).match(initialURLRegex));
+    done(null, stringifyURL(parsedUrl).match(initialURLRegex));
   });
-
-  //PREFIX CONDITION IF INITIAL DOMAIN CHANGE IS NOT ALLOWED AND HOST PARAM BEEN SENT
-  if (options.host && !options.allowInitialDomainChange) {
-    msg.blue('ADDING CONDITION TO PREVENT FETCHING OTHER DOMAINS');
-    crawler.addFetchCondition((parsedUrl, referrer, done) => {
-      const samePrefix = stringifyURL(parsedUrl).indexOf(options.host) !== -1;
-      const sameDomain = uri.hostname === parsedUrl.hostname;
-      done(samePrefix && sameDomain);
+  if(options.filterByDomain){
+    crawler.addFetchCondition(function(queueItem, referrerQueueItem, callback) {
+      // We only ever want to move one step away from example.com, so if the
+      // referrer queue item reports a different domain, don't proceed
+      // console.log(2, referrerQueueItem.host, referrerQueueItem.host === crawler.host);
+      callback(null, referrerQueueItem.host === crawler.host);
     });
   }
 
   // file type and urls exclusion
   crawler.addFetchCondition((parsedUrl, referrer, done) => {
-    done(!parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex));
+    done(null, !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex));
   });
 
   return crawler;
