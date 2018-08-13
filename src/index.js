@@ -12,7 +12,7 @@ const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
 const urlExists = require('url-exists');
 const async = require('async');
-puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer');
 const discoverResources = require('./discoverResources');
 
 const createCrawler = require('./createCrawler');
@@ -26,6 +26,7 @@ const msg = require('./helpers/msg-helper');
 const getCurrentDateTime = require('./helpers/getCurrentDateTime');
 
 module.exports = function SitemapGenerator(uri, opts) {
+  let browser = null;
   const defaultOpts = {
     stripQuerystring: true,
     maxEntriesPerFile: 50000,
@@ -171,8 +172,12 @@ module.exports = function SitemapGenerator(uri, opts) {
         // Extract all languages and urls from head
         $('head').find('link[rel="alternate"]').each(function() {
           let hreflang = $(this).attr('hreflang');
+          let type = $(this).attr('type');
           let hreflangUrl = $(this).attr('href').replace('\n', '').trim();
 
+          if(type === 'application/rss+xml'){
+            return;
+          }
           if (hreflangUrl !== '' && normalizeUrl(urlObj.value, { normalizeHttps: true }) === normalizeUrl(hreflangUrl, { normalizeHttps: true })) {
             // Update the original URL by it's main language
             urlObj.lang = hreflang;
@@ -217,10 +222,10 @@ module.exports = function SitemapGenerator(uri, opts) {
         return;
       }
       const items = queuedItems.splice(0, options.maxConcurrency);
-      for (const queueItem of items) {
+      async.each(items, (queueItem, callback) => {
         const { url, depth, busy } = queueItem;
         if (busy) {
-          msg.info('SKIPPING ' + url);
+          // msg.info('SKIPPING ' + url);
           return;
         }
         queueItem.busy = true;
@@ -228,19 +233,28 @@ module.exports = function SitemapGenerator(uri, opts) {
         const lastMod = options.lastModEnabled ? queueItem.stateData.headers['last-modified'] : null;
         addURL(url, depth, lastMod).then(() => {
           queueItem.visited = true;
+          queueItem.busy = false;
           msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
           emitter.emit('add', queueItem);
+          callback();
         }).catch((error) => {
           queueItem.visited = true;
+          queueItem.busy = false;
 
-          if (!error) {
-            return;
+          if (error) {
+            msg.error('========');
+            msg.error('Error during adding the following URL: ' + url);
+            msg.error(error.message);
+            msg.error('========');
           }
-          msg.error('========');
-          msg.error('Error during adding the following URL: ' + url);
-          msg.error(error);
-          msg.error('========');
+          callback();
         });
+      }, (error) => {
+
+      });
+
+      for (const queueItem of items) {
+
       }
     }, interv);
   };
@@ -252,23 +266,9 @@ module.exports = function SitemapGenerator(uri, opts) {
       flushed: false, alternatives: [], lang: 'en'
     };
 
-    const getHTML = (done) => {
-      // msg.yellow('RETRIEVING HTML FOR: ' + urlObj.value);
-      var options = urlParser.parse(urlObj.value);
-      options.maxRedirects = 10;
-      const protocol = urlObj.value.indexOf('https://') !== -1 ? https : http;
-      protocol.get(options, (res) => {
-        let html = '';
-        res.on('data', (chunk) => {
-          html += chunk;
-        });
-        res.on('end', () => {
-          // msg.green('HTML DOWNLOADED FOR: ' + url);
-          done(null, html);
-        });
-      }).on('error', (err) => {
-        done(err);
-      });
+    const getHTML = async () => {
+      const html = await discoverResources(browser).getHTML(urlObj.value);
+      return html.body;
     };
 
     const init = (resolve, reject) => {
@@ -311,24 +311,22 @@ module.exports = function SitemapGenerator(uri, opts) {
           });
         }
       };
-      urlExists(url, function(err, isNotBroken) {
-        getHTML(function(err, body) {
-          if (err) {
-            msg.error(err);
-            return;
-          }
+
+
+      (async () => {
+        urlExists(url, async function(err, isNotBroken) {
+          let body = await getHTML();
           const $ = cheerio.load(body);
           if (options.replaceByCanonical) {
             let canonicalURL = '';
             $('head').find('link[rel="canonical"]').each(function() {
               canonicalURL = $(this).attr('href').replace('\n', '').trim();
             });
-            urlExists(canonicalURL, function(err, isCanNotBroken) {
+            urlExists(canonicalURL, async function(err, isCanNotBroken) {
               if (isCanNotBroken) {
                 urlObj.value = canonicalURL;
-                getHTML(function(err, body) {
-                  handleURL(isCanNotBroken, body);
-                });
+                body = await getHTML();
+                handleURL(isCanNotBroken, body);
               }
               else {
                 handleURL(isNotBroken, body);
@@ -337,9 +335,9 @@ module.exports = function SitemapGenerator(uri, opts) {
           } else {
             handleURL(isNotBroken, body);
           }
-
         });
-      });
+      })();
+
     };
 
     if (depth > realCrawlingDepth) {
@@ -405,7 +403,7 @@ module.exports = function SitemapGenerator(uri, opts) {
         sitemap.finish();
 
         const sitemaps = sitemap.getPaths();
-
+        msg.info(sitemaps);
         const cb = () => emitter.emit('done', getStats());
 
         // move files
@@ -437,10 +435,12 @@ module.exports = function SitemapGenerator(uri, opts) {
               );
             }
           );
-        } else if (sitemaps.length) {
+        }
+        else if (sitemaps.length) {
           savedOnDiskSitemapPaths.push(sitemapPath);
 
           (async () => {
+            msg.green('SITEMAP GENERATED ON: ' + sitemaps[0]);
             await cpFile(sitemaps[0], sitemapPath);
             msg.green('MOVING SITEMAP TO THE TARGET DIR: ' + sitemapPath);
             fs.unlink(sitemaps[0], cb);
@@ -468,7 +468,7 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const init = async () => {
-    const browser = options.deep ? await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] }) : null;
+    browser = await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] });
     crawler = createCrawler(parsedUrl, options, browser);
 
     crawler.on('fetch404', ({ url }) => emitError(404, url));
@@ -508,7 +508,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       } else if (isValidURL(url)) {
         (async () => {
           if (options.deep) {
-            const links = await discoverResources(browser)(null, queueItem);
+            const links = await discoverResources(browser).getLinks(null, queueItem);
             for (const link of links) {
               queueURL(link, queueItem, false);
             }

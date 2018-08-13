@@ -3,8 +3,9 @@ const cheerio = require('cheerio');
 
 let browser = null;
 const discoverWithCheerio = (buffer, queueItem) => {
-  const $ = cheerio.load(buffer.body ? buffer.body : buffer.toString('utf8'));
+  queueItem.plainHTML = buffer.body ? buffer.body : buffer.toString('utf8');
 
+  const $ = cheerio.load(queueItem.plainHTML);
   const metaRobots = $('meta[name="robots"]');
 
   if (
@@ -58,31 +59,31 @@ const discoverWithCheerio = (buffer, queueItem) => {
   });
   return links.get();
 };
-const discoverWithHeadlessBrowser = async (buffer, queueItem) => {
-  const getHTML = async (url) => {
-    const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'en'
+const getHTML = async (url) => {
+  const page = await browser.newPage();
+  await page.setExtraHTTPHeaders({
+    'Accept-Language': 'en'
+  });
+
+  const result = { url: url, body: '', endURL: url };
+  try {
+    await page.goto(url, {
+      waitLoad: true,
+      waitNetworkIdle: true,
+      timeout: 3000000
     });
+    await page.waitFor(15000);
+    result.body = await page.evaluate('new XMLSerializer().serializeToString(document.doctype) + document.documentElement.outerHTML');
+    result.endURL = await page.evaluate('window.location.origin');
+    await page.close();
 
-    const result = { url: url, body: '', endURL: url };
-    try {
-      await page.goto(url, {
-        waitLoad: true,
-        waitNetworkIdle: true,
-        timeout: 3000000
-      });
-      await page.waitFor(15000);
-      result.body = await page.evaluate('new XMLSerializer().serializeToString(document.doctype) + document.documentElement.outerHTML');
-      result.endURL = await page.evaluate('window.location.origin');
-      await page.close();
+  } catch (ex) {
+    console.log(ex);
+  }
+  return result;
+};
+const discoverWithHeadlessBrowser = async (buffer, queueItem) => {
 
-    } catch (ex) {
-      console.log(ex);
-      return done(ex, null);
-    }
-    return result;
-  };
 
   const url = queueItem.url;
   const data = await getHTML(url);
@@ -92,5 +93,8 @@ const discoverWithHeadlessBrowser = async (buffer, queueItem) => {
 };
 module.exports = (optionalBrowser) => {
   browser = optionalBrowser;
-  return browser ? discoverWithHeadlessBrowser : discoverWithCheerio;
+  return {
+    getLinks: browser ? discoverWithHeadlessBrowser : discoverWithCheerio,
+    getHTML: getHTML
+  };
 };

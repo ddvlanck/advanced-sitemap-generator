@@ -65,7 +65,7 @@ module.exports = (uri, options = {}, browser) => {
   });
 
   // use custom discoverResources function
-  crawler.discoverResources = discoverResources();
+  crawler.discoverResources = discoverResources().getLinks;
 
   // set crawler options
   // see https://github.com/cgiffard/node-simplecrawler#configuration

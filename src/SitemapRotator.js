@@ -15,7 +15,7 @@ module.exports = function SitemapRotator(options) {
     }, []);
 
   // adds url to stream
-  const addURL = (url, depth) => {
+  const addURL = (url) => {
     // create stream if none exists
     if (current === null) {
       current = SitemapStream();
@@ -32,13 +32,13 @@ module.exports = function SitemapRotator(options) {
     count += 1;
   };
   const flush = () => {
-    for (let sitemap of sitemaps) {
+    for (const sitemap of sitemaps) {
       sitemap.flush();
     }
   }
   // close stream
   const finish = () => {
-    for (let sitemap of sitemaps) {
+    for (const sitemap of sitemaps) {
       sitemap.end();
     }
   };
