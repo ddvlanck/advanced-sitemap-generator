@@ -5,7 +5,7 @@ const discoverResources = require('./discoverResources');
 const stringifyURL = require('./helpers/stringifyURL');
 const msg = require('./helpers/msg-helper');
 
-module.exports = (uri, options = {}, browser) => {
+module.exports = (uri, options = {}) => {
   // excluded filetypes
   let exlcudeDefaultArray = [
     'gif',
@@ -81,8 +81,8 @@ module.exports = (uri, options = {}, browser) => {
   //PREFIX CONDITION IF INITIAL DOMAIN CHANGE IS NOT ALLOWED AND HOST PARAM BEEN SENT
   if (options.host && !options.allowInitialDomainChange) {
     crawler.addFetchCondition(parsedUrl => {
-      const initialURLRegex = new RegExp(`${options.host}.*`);
-      return stringifyURL(parsedUrl).match(initialURLRegex);
+      const pureURL = options.host.replace('https://', '').replace('http://', '').replace('wwww.', '');
+      return stringifyURL(parsedUrl).indexOf(pureURL !== -1);
     });
   }
 
