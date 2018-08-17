@@ -5,7 +5,7 @@ const superagent = require('superagent-interface-promise');
 let browser = null;
 const discoverWithCheerio = (buffer, queueItem) => {
   queueItem.plainHTML = buffer.body ? buffer.body : buffer.toString('utf8');
-
+  queueItem.canonical = [];
   const $ = cheerio.load(queueItem.plainHTML);
   const metaRobots = $('meta[name="robots"]');
 
@@ -17,9 +17,12 @@ const discoverWithCheerio = (buffer, queueItem) => {
     return [];
   }
 
-  const links = $('a[href]').map(function iteratee() {
+  const html = $('a[href], link[rel="canonical"]');
+  const links = html.map(function iteratee() {
     let href = $(this).attr('href');
-
+    if (!href || href === '') {
+      return null;
+    }
     // exclude "mailto:" etc
     if (/^[a-z]+:(?!\/\/)/i.test(href)) {
       return null;
@@ -29,6 +32,9 @@ const discoverWithCheerio = (buffer, queueItem) => {
     const rel = $(this).attr('rel');
     if (/nofollow/i.test(rel)) {
       return null;
+    }
+    else if (rel === 'canonical') {
+      queueItem.canonical.push(href);
     }
 
     // remove anchors
