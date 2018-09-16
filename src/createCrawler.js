@@ -76,12 +76,11 @@ module.exports = (uri, options = {}, browser) => {
   const shouldPageBeFetched = (queueItem, referrerQueueItem) => {
     // restrict to subpages if path is provided
     const initialURLRegex = new RegExp(`${uri.pathname}.*`);
-    const subPageRestriction = stringifyURL(queueItem.url).match(initialURLRegex);
+    const subPageRestriction = stringifyURL(queueItem).match(initialURLRegex);
 
     // file type and urls exclusion
     const isExtAllowed = !queueItem.path.match(extRegex) && !queueItem.path.match(urlRegex);
-
-    const isDomainAllowed = options.filterByDomain ? referrerQueueItem.host === crawler.host : true;
+    const isDomainAllowed = options.filterByDomain ? (referrerQueueItem.host === crawler.host) : true;
 
     return subPageRestriction && isExtAllowed && isDomainAllowed;
   };

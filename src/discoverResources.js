@@ -83,8 +83,8 @@ const discoverWithCheerio = (buffer, queueItem) => {
     });
   };
 
-  const links = ()=>{
-    const $ = queueItem.$
+  const links = () => {
+    const $ = queueItem.$;
     const html = $('a[href], link[rel="canonical"]');
     const links = html.map(function iteratee() {
       let href = $(this).attr('href');
@@ -153,7 +153,6 @@ const discoverWithCheerio = (buffer, queueItem) => {
       }
     });
   })();
-
 
   return links().get();
 };
