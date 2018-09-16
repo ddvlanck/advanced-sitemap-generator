@@ -40,23 +40,23 @@ module.exports = function SitemapStream() {
     stream.write('\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" >');
   };
 
-  const flushURL = (url) => {
-    url.flushed = true;
+  const flushURL = (queueItem) => {
+    queueItem.flushed = true;
 
-    const escapedUrl = escapeUnsafe(url.value);
+    const escapedUrl = escapeUnsafe(queueItem.url);
 
     stream.write(`\n  <url>\n    <loc>${escapedUrl}</loc>`);
-    for (let alternativeUrl of url.alternatives) {
+    for (let alternativeUrl of queueItem.alternatives) {
       // Skip self refrence alternative URL
       // if(alternativeUrl.value === url.value){
       //   continue;
       // }
       stream.write(`\n    <xhtml:link rel='alternate' hreflang='` + alternativeUrl.lang +
-        `' href='` + escapeUnsafe(alternativeUrl.value) + `' />`);
+        `' href='` + escapeUnsafe(alternativeUrl.url) + `' />`);
     }
     stream.write(`\n    <changefreq>daily</changefreq>`);
-    stream.write(`\n    <priority>` + getPiriorityFromDepth(url.depth) + `</priority>`);
-    stream.write(`\n    <lastmod>` + url.lastMod + `</lastmod>`);
+    stream.write(`\n    <priority>` + getPiriorityFromDepth(queueItem.depth) + `</priority>`);
+    stream.write(`\n    <lastmod>` + queueItem.lastMod + `</lastmod>`);
     stream.write(`\n  </url>`);
   };
   const flush = () => {

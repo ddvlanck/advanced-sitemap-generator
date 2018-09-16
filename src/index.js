@@ -4,13 +4,9 @@ const https = require('follow-redirects').https;
 const path = require('path');
 const parseURL = require('url-parse');
 const cpFile = require('cp-file');
-const cheerio = require('cheerio');
-const urlParser = require('url');
 const normalizeUrl = require('normalize-url');
-const cld = require('cld');
 const eachSeries = require('async/eachSeries');
 const mitt = require('mitt');
-const urlExists = require('url-exists');
 const async = require('async');
 const puppeteer = require('puppeteer');
 const discoverResources = require('./discoverResources');
@@ -42,7 +38,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     recommendAlternatives: false,
     timeout: 120000,
     decodeResponses: true,
-    lastModEnabled: true,
     changeFreq: '',
     priorityMap: [],
     forcedURLs: []
@@ -53,12 +48,8 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const options = Object.assign({}, defaultOpts, opts);
 
-  let cachedResultURLs = [];
   let realCrawlingDepth = 0;
   let savedOnDiskSitemapPaths = [];
-
-  let schadulerId = '';
-  let isCrawling = false;
 
   let crawler = null;
 
@@ -67,24 +58,42 @@ module.exports = function SitemapGenerator(uri, opts) {
     ignore: 0,
     error: 0
   };
-  const getStats = () => ({
-    added: stats.add || 0,
-    ignored: stats.ignore || 0,
-    errored: stats.error || 0,
-    urls: cachedResultURLs,
-    realCrawlingDepth: realCrawlingDepth
-  });
+  const getQueueReadyItems = () => {
+    const items = crawler.queue.filter((item) => {
+      return item.visited && item.isDiscoveryProcessDone && item.fetched === true;
+    });
+    return items;
+  };
+  const mergeQueueItems = (from, to, deep) => {
+    to.depth = to.depth > from.depth ? from.depth : to.depth;
+    to.lastMod = to.lastMod === '' ? from.lastMod : to.lastMod;
+
+    if (!deep) {
+      return;
+    }
+    for (const fromAlter of from.alternatives) {
+      const isExisted = to.alternatives.filter((item) => {
+        return item.urlNormalized === fromAlter.urlNormalized;
+      }).length;
+      if (!isExisted) {
+        to.alternatives.push(fromAlter);
+      }
+    }
+  };
+  const getStats = () => {
+    const results = {
+      added: stats.add || 0,
+      ignored: stats.ignore || 0,
+      errored: stats.error || 0,
+      urls: getQueueReadyItems(),
+      realCrawlingDepth: realCrawlingDepth
+    };
+    return results;
+  };
   const getPaths = () => {
     return savedOnDiskSitemapPaths;
   };
-  const addBaseSitemapURLs = () => {
-    for (const url of options.forcedURLs) {
-      url.depth = 100;
-      url.flushed = false;
-      url.lastMod = '';
-      cachedResultURLs.push(url);
-    }
-  };
+
   // if changeFreq option was passed, check to see if the value is valid
   if (opts && opts.changeFreq) {
     options.changeFreq = validChangeFreq(opts.changeFreq);
@@ -104,25 +113,10 @@ module.exports = function SitemapGenerator(uri, opts) {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
   const start = () => {
-    isCrawling = true;
-    clearInterval(schadulerId);
-    triggerSchadulers(options.interval);
-
-    cachedResultURLs = [];
-    addBaseSitemapURLs();
-
-    //Add initial URL
-    queueURL(uri, {}, true);
     crawler.start();
   };
 
   const stop = () => {
-    if (!isCrawling) {
-      return;
-    }
-
-    isCrawling = false;
-    clearInterval(schadulerId);
     crawler.stop();
 
     setTimeout(() => {
@@ -131,75 +125,13 @@ module.exports = function SitemapGenerator(uri, opts) {
     }, 60000);
 
   };
-  const createSitemapFromURLs = (urls) => {
-    for (let urlObj of urls) {
-      sitemap.addURL(urlObj);
-    }
-    onCrawlerComplete();
-  };
+
   const queueURL = (url, referrer, force) => {
     const result = crawler.queueURL(url, referrer, force);
     if (result) {
       msg.info('NEW ITEM ADDED TO THE QUEUE MANUALLY: ' + url);
     }
   };
-
-  const guessHTMLLang = (html) => {
-    const $ = cheerio.load(html);
-    const init = (resolve, reject) => {
-      let lang = $('html').attr('lang') ? $('html').attr('lang') : '';
-      if (lang !== '') {
-        resolve(lang);
-      } else {
-        cld.detect(html, { isHTML: true }, function(err, result) {
-          if (err) {
-            reject(err);
-          }
-          lang = result.languages[0].code;
-          resolve(lang);
-        });
-      }
-    };
-    let promise = new Promise(init);
-    return promise;
-  };
-  const detectUrlLang = (urlObj, body) => {
-    const init = (resolve, reject) => {
-      const $ = cheerio.load(body);
-
-      guessHTMLLang(body).then(lang => {
-        urlObj.lang = lang;
-        // Extract all languages and urls from head
-        $('head').find('link[rel="alternate"]').each(function() {
-          let hreflang = $(this).attr('hreflang');
-          let type = $(this).attr('type');
-          let hreflangUrl = $(this).attr('href').replace('\n', '').trim();
-
-          if (type === 'application/rss+xml') {
-            return;
-          }
-          if (hreflangUrl !== '' && normalizeUrl(urlObj.value, { normalizeHttps: true }) === normalizeUrl(hreflangUrl, { normalizeHttps: true })) {
-            // Update the original URL by it's main language
-            urlObj.lang = hreflang;
-          }
-          if (typeof hreflang !== typeof undefined && hreflang !== false && hreflangUrl !== '') {
-            urlObj.alternatives.push({
-              value: hreflangUrl,
-              flushed: false,
-              lang: hreflang
-            });
-          }
-        });
-        resolve(urlObj);
-      }).catch((error) => {
-        reject(error);
-      });
-    };
-
-    let promise = new Promise(init);
-    return promise;
-  };
-
   // create sitemap stream
   const sitemap = SitemapRotator(options);
 
@@ -210,192 +142,111 @@ module.exports = function SitemapGenerator(uri, opts) {
       url
     });
   };
-  const triggerSchadulers = (interv) => {
-    schadulerId = setInterval(() => {
 
-      const queuedItems = crawler.queue.filter((item) => {
-        return !item.visited && !item.busy && item.fetched === true;
-      });
-      if (!isCrawling && queuedItems.length === 0) {
-        return clearInterval(schadulerId);
-      } else if (isCrawling && queuedItems.length === 0) {
-        msg.info('ORIGINAL QUEUE CONTAINS ' + crawler.queue.length + '. HOWEVER, WAITING FOR READY FETCHED URLs TO WORK ON..');
-        return;
-      }
-      const items = queuedItems.splice(0, options.maxConcurrency);
-      async.each(items, (queueItem, callback) => {
-        const { url, depth, busy } = queueItem;
-        if (busy) {
-          // msg.info('SKIPPING ' + url);
-          return;
-        }
-        queueItem.busy = true;
-        // msg.yellowBright('ADDING PROCESS FOR: ' + url);
-        const lastMod = options.lastModEnabled ? queueItem.stateData.headers['last-modified'] : null;
-        addURL(queueItem, lastMod).then(() => {
-          queueItem.visited = true;
-          queueItem.busy = false;
-          msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
-          emitter.emit('add', queueItem);
-          callback();
-        }).catch((error) => {
-          queueItem.visited = true;
-          queueItem.busy = false;
-
-          if (error) {
-            msg.error('========');
-            msg.error('Error during adding the following URL: ' + url);
-            msg.error(error.message);
-            msg.error('========');
-          }
-          callback();
-        });
-      }, (error) => {
-
-      });
-    }, interv);
-  };
-  const addURL = (queueItem, lastMod) => {
-    let { url, depth } = queueItem;
-    url = url.trim().replace('\n', '');
-    msg.info('ADDING: ' + url);
-    let urlObj = {
-      value: url, depth: depth, lastMod: getCurrentDateTime(lastMod),
-      flushed: false, alternatives: [], lang: 'en'
-    };
-
-    const getHTML = () => {
-      return discoverResources(browser).getHTML(urlObj.value);
-    };
-
-    const init = (resolve, reject) => {
-      const mergeURLObj = (from, to) => {
-        to.depth = to.depth > from.depth ? depth : from.depth;
-        to.lastMod = to.lastMod === '' ? from.lastMod : to.lastMod;
-        for (const fromAlter of from.alternatives) {
-          const isExisted = to.alternatives.filter((item) => {
-            return normalizeUrl(item.value, { normalizeHttps: true }) === normalizeUrl(fromAlter.value, { normalizeHttps: true });
-          }).length;
-          if (!isExisted) {
-            to.alternatives.push(fromAlter);
-          }
-        }
-      };
-      const handleURL = (isNotBroken, body) => {
-        if (!isNotBroken) {
-          emitError(404, 'URL IS BROKEN');
-          reject();
-        } else {
-          detectUrlLang(urlObj, body).then(result => {
-            urlObj = result;
-            let existedURL = cachedResultURLs.filter(function(item) {
-              return normalizeUrl(urlObj.value, { normalizeHttps: true }) === normalizeUrl(item.value, { normalizeHttps: true });
-            });
-
-            if (existedURL.length) {
-              mergeURLObj(urlObj, existedURL[0]);
-              emitError(200, 'URL WAS CRAWLED BEFORE');
-              reject();
-            }
-            else if (existedURL.length === 0) {
-              cachedResultURLs.push(urlObj);
-              resolve(urlObj);
-            }
-
-          }).catch((error) => {
-            emitError(500, error.message);
-            reject(error);
-          });
-        }
-      };
-
-      (async () => {
-        urlExists(url, async function(err, isNotBroken) {
-          getHTML().then((res) => {
-            let body = res.text;
-            const $ = cheerio.load(body);
-            if (options.replaceByCanonical) {
-              let canonicalURL = '';
-              $('head').find('link[rel="canonical"]').each(function() {
-                canonicalURL = $(this).attr('href').replace('\n', '').trim();
-              });
-              urlExists(canonicalURL, async function(err, isCanNotBroken) {
-                if (isCanNotBroken) {
-                  queueURL(canonicalURL, queueItem, false);
-                }
-                else {
-                  handleURL(isNotBroken, body);
-                }
-              });
-            } else {
-              handleURL(isNotBroken, body);
-            }
-          });
-
-        });
-      })();
-
-    };
-
-    if (depth > realCrawlingDepth) {
-      realCrawlingDepth = depth;
-    }
-
-    let promise = new Promise(init);
-    return promise;
-  };
   const onCrawlerComplete = () => {
-    const getLangFreeURL = (url) => {
-      const langs = getLangCodeMap(url.lang);
-      let pureURL = url.value;
+    let queuedItems = getQueueReadyItems();
+    const addBaseURLsToQueue = () => {
+      for (const url of options.forcedURLs) {
+        const item = {
+          depth: 100,
+          lastMod: '',
+          url: url.value
+        };
+        item.alternatives = url.alternatives.map((alter) => {
+          alter.url = alter.value;
+          return alter;
+        });
+        const existingItem = queuedItems.filter((queueItem) => {
+          return item.url === queueItem.url;
+        })[0];
+        if (existingItem) {
+          mergeQueueItems(item, existingItem, true);
+        } else {
+          queuedItems.push(item);
+        }
+      }
+    };
+    const getLangFreeURL = (queueItem) => {
+      const langs = getLangCodeMap(queueItem.lang);
+      let pureURL = queueItem.url;
       for (const lang of langs) {
         pureURL = pureURL.replace('/' + lang, '');
       }
       return pureURL;
     };
     const recommendAlternatives = () => {
-      for (let url of cachedResultURLs) {
-        let pureURL = getLangFreeURL(url);
-        for (let otherURL of cachedResultURLs) {
-          let otherPureURL = getLangFreeURL(otherURL);
-          if (url.value === otherURL.value || pureURL !== otherPureURL) {
+      for (let queueItem of queuedItems) {
+        const pureURL = getLangFreeURL(queueItem);
+        for (let otherQueueItem of queuedItems) {
+          const otherPureURL = getLangFreeURL(otherQueueItem);
+          if (queueItem.url === otherQueueItem.url || pureURL !== otherPureURL) {
             continue;
           }
 
-          let isAlternativeAddedBefore = url.alternatives.filter(function(alter) {
-
-            return (normalizeUrl(alter.value, { normalizeHttps: true }) === normalizeUrl(otherURL.value, { normalizeHttps: true })) || alter.lang === otherURL.lang;
+          let isAlternativeAddedBefore = queueItem.alternatives.filter(function(alter) {
+            return (alter.urlNormalized === otherQueueItem.urlNormalized) || alter.lang === otherQueueItem.lang;
           }).length;
 
           if (isAlternativeAddedBefore) {
             continue;
           }
-          url.alternatives.push({
-            value: otherURL.value,
+          queueItem.alternatives.push({
+            url: otherQueueItem.url,
+            urlNormalized: normalizeUrl(otherQueueItem.url, { normalizeHttps: true }),
             flushed: false,
-            lang: otherURL.lang
+            lang: otherQueueItem.lang
           });
         }
 
-        let isSelfRefrencingAlternativeAddedBefore = url.alternatives.filter(function(alter) {
+        let isSelfRefrencingAlternativeAddedBefore = queueItem.alternatives.filter(function(alter) {
           //IF THE URL WAS ADDED BEFORE OR THERE IS ANOTHER ONE FOR THIS LANG
-          return (normalizeUrl(alter.value, { normalizeHttps: true }) === normalizeUrl(url.value, { normalizeHttps: true })) || alter.lang === url.lang;
+          return (alter.urlNormalized === queueItem.urlNormalized) || alter.lang === queueItem.lang;
         }).length;
-        if (url.alternatives.length === 0 || isSelfRefrencingAlternativeAddedBefore) {
+        if (queueItem.alternatives.length === 0 || isSelfRefrencingAlternativeAddedBefore) {
           continue;
         }
 
-        url.alternatives.push({
-          value: url.value,
+        queueItem.alternatives.push({
+          url: queueItem.url,
+          urlNormalized: normalizeUrl(queueItem.url, { normalizeHttps: true }),
           flushed: false,
-          lang: url.lang
+          lang: queueItem.lang
         });
+      }
+    };
+
+    const handleCanonicals = () => {
+      for (let queueItem of queuedItems) {
+        //CHECK IF CANONICAL ALREADY IN THE QUEUE
+        const canonicalItem = queuedItems.filter((item) => {
+          return queueItem.canonical === item.url;
+        })[0];
+        if (canonicalItem) {
+          mergeQueueItems(queueItem, canonicalItem, true);
+          queueItem.shouldBeDelete = true;
+        }
+      }
+    };
+    const handleUppercaseLettersURLs = () => {
+      for (let queueItem of queuedItems) {
+        //CHECK IF CANONICAL ALREADY IN THE QUEUE
+        const otherQueueItem = queuedItems.filter((item) => {
+          return queueItem.url.toLowerCase() === item.url.toLowerCase()
+            && queueItem.id !== item.id;
+        })[0];
+
+        //THERE IS AN UPPER CASE LETTER
+        if (otherQueueItem && (otherQueueItem.url.toLowerCase() !== otherQueueItem.url)) {
+          mergeQueueItems(queueItem, otherQueueItem, true);
+          queueItem.shouldBeDelete = true;
+        } else if (otherQueueItem) {
+          mergeQueueItems(otherQueueItem, queueItem, true);
+          otherQueueItem.shouldBeDelete = true;
+        }
       }
     };
     const init = () => {
       msg.green('CRAWLER COMPLETE CRAWLING THE WEBSITE');
-
-      isCrawling = false;
       const finish = () => {
         sitemap.finish();
 
@@ -447,13 +298,20 @@ module.exports = function SitemapGenerator(uri, opts) {
         }
       };
 
+      addBaseURLsToQueue();
+      handleCanonicals();
+      handleUppercaseLettersURLs();
+
+      queuedItems = queuedItems.filter((item) => {
+        return !item.shouldBeDelete;
+      });
       if (options.recommendAlternatives) {
         recommendAlternatives();
       }
 
-      for (let url of cachedResultURLs) {
-        msg.blue('FLUSHING: ' + url.value);
-        sitemap.addURL(url);
+      for (let queueItem of queuedItems) {
+        msg.blue('FLUSHING: ' + queueItem.url + ' WITH ' + (queueItem.alternatives ? queueItem.alternatives.length : 0) + ' ALTERNATIVES');
+        sitemap.addURL(queueItem);
       }
       sitemap.flush();
       // Wait extra 10 seconds to make sure that sitemaps been saved on disk
@@ -466,7 +324,9 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const init = async () => {
-    browser = await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] });
+    if (options.deep) {
+      browser = await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] });
+    }
     crawler = createCrawler(parsedUrl, options, browser);
 
     crawler.on('fetch404', ({ url }) => emitError(404, url));
@@ -475,7 +335,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     crawler.on('invaliddomain', ({ url }) => emitError(403, url));
     crawler.on('fetchprevented', ({ url }) => emitError(403, url));
 
-    crawler.on('queueduplicate', ({ url }) => emitError(500, url));
     crawler.on('queueerror', ({ url }) => emitError(500, url));
     crawler.on('fetchconditionerror', ({ url }) => emitError(500, url));
 
@@ -493,28 +352,41 @@ module.exports = function SitemapGenerator(uri, opts) {
 
     crawler.on('fetchdisallowed', ({ url }) => emitter.emit('ignore', url));
 
-    // fetch complete event
-    crawler.on('fetchcomplete', (queueItem, page) => {
-      const { url } = queueItem;
-      queueItem.busy = false;
-      queueItem.visited = false;
+    crawler.on('queueduplicate', (queueItem) => {
+      const items = crawler.queue.filter((item) => {
+        return item.url === queueItem.url;
+      });
+      mergeQueueItems(queueItem, items[0], false);
+    });
 
+    crawler.on('fetchheaders', (queueItem, page) => {
+      queueItem.flushed = false;
+      queueItem.visited = true;
+
+      let lastMod = queueItem.stateData.headers['last-modified'];
+      queueItem.lastMod = getCurrentDateTime(lastMod);
+
+      if (queueItem.depth > realCrawlingDepth) {
+        realCrawlingDepth = queueItem.depth;
+      }
+    });
+
+    crawler.on('fetchcomplete', (queueItem, page) => {
+      const { url, depth } = queueItem;
       // msg.info('FETCH COMPLETE FOR ' + url);
       // check if robots noindex is present
       if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
         emitter.emit('ignore', queueItem);
       } else if (isValidURL(url)) {
-        (async () => {
-          if (options.deep) {
-            const links = await discoverResources(browser).getLinks(null, queueItem);
-            for (const link of links) {
-              queueURL(link, queueItem, false);
-            }
-          }
-        })();
+        msg.yellowBright('ADDING PROCESS FOR: ' + url + ' WAS DONE');
+        emitter.emit('add', queueItem);
       } else {
         emitError('404', url);
       }
+
+    });
+
+    crawler.on('discoverycomplete', (queueItem, resources) => {
     });
 
     crawler.on('complete', onCrawlerComplete);
@@ -540,7 +412,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     queueURL,
     on: emitter.on,
     off: emitter.off,
-    getPaths,
-    createSitemapFromURLs
+    getPaths
   };
 };

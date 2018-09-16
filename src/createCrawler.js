@@ -6,7 +6,7 @@ const discoverResources = require('./discoverResources');
 const stringifyURL = require('./helpers/stringifyURL');
 const msg = require('./helpers/msg-helper');
 
-module.exports = (uri, options = {}) => {
+module.exports = (uri, options = {}, browser) => {
   // excluded filetypes
   let exlcudeDefaultArray = [
     'gif',
@@ -66,31 +66,28 @@ module.exports = (uri, options = {}) => {
   });
 
   // use custom discoverResources function
-  crawler.discoverResources = discoverResources().getLinks;
+  crawler.discoverResources = discoverResources({ browser: browser, crawler: crawler }).getLinks;
 
   // set crawler options
   // see https://github.com/cgiffard/node-simplecrawler#configuration
   crawler.initialPath = uri.pathname !== '' ? uri.pathname : '/';
   crawler.initialProtocol = uri.protocol.replace(':', '');
 
-  // restrict to subpages if path is provided
-  crawler.addFetchCondition((parsedUrl, referrer, done) => {
+  const shouldPageBeFetched = (queueItem, referrerQueueItem) => {
+    // restrict to subpages if path is provided
     const initialURLRegex = new RegExp(`${uri.pathname}.*`);
-    // console.log(1, uri.pathname, stringifyURL(parsedUrl), stringifyURL(parsedUrl).match(initialURLRegex));
-    done(null, stringifyURL(parsedUrl).match(initialURLRegex));
-  });
-  if(options.filterByDomain){
-    crawler.addFetchCondition(function(queueItem, referrerQueueItem, callback) {
-      // We only ever want to move one step away from example.com, so if the
-      // referrer queue item reports a different domain, don't proceed
-      // console.log(2, referrerQueueItem.host, referrerQueueItem.host === crawler.host);
-      callback(null, referrerQueueItem.host === crawler.host);
-    });
-  }
+    const subPageRestriction = stringifyURL(queueItem.url).match(initialURLRegex);
 
-  // file type and urls exclusion
-  crawler.addFetchCondition((parsedUrl, referrer, done) => {
-    done(null, !parsedUrl.path.match(extRegex) && !parsedUrl.path.match(urlRegex));
+    // file type and urls exclusion
+    const isExtAllowed = !queueItem.path.match(extRegex) && !queueItem.path.match(urlRegex);
+
+    const isDomainAllowed = options.filterByDomain ? referrerQueueItem.host === crawler.host : true;
+
+    return subPageRestriction && isExtAllowed && isDomainAllowed;
+  };
+
+  crawler.addFetchCondition((queueItem, referrerQueueItem, done) => {
+    done(null, shouldPageBeFetched(queueItem, referrerQueueItem));
   });
 
   return crawler;

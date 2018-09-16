@@ -1,6 +1,6 @@
 {
-  "_from": "advanced-sitemap-generator@1.4.4",
-  "_id": "advanced-sitemap-generator@1.4.4",
+  "_from": "advanced-sitemap-generator@1.5",
+  "_id": "advanced-sitemap-generator@1.5",
   "_inBundle": false,
   "_integrity": "sha1-Zoi/OEcL+Yu6zaZF60lukYLxqu4=",
   "_location": "/advanced-sitemap-generator",
@@ -51,7 +51,7 @@
     "name": "Hazem Hagrass"
   },
   "bugs": {
-    "url": "https://github.com/hazemhagrass/sitemap-generator/issues"
+    "url": "https://github.com/hazemhagrass/advanced-sitemap-generator/issues"
   },
   "bundleDependencies": false,
   "dependencies": {
@@ -103,7 +103,7 @@
   "engines": {
     "node": ">=6"
   },
-  "homepage": "https://github.com/hazemhagrass/sitemap-generator",
+  "homepage": "https://github.com/hazemhagrass/advanced-sitemap-generator",
   "keywords": [
     "sitemap",
     "xml",
@@ -122,10 +122,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hazemhagrass/sitemap-generator.git"
+    "url": "git+https://github.com/hazemhagrass/advanced-sitemap-generator.git"
   },
   "scripts": {
     "test": "grunt nodeunit"
   },
-  "version": "1.4.4"
+  "version": "1.5"
 }
