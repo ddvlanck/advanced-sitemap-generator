@@ -324,7 +324,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const init = async () => {
     if (options.deep) {
-      browser = await puppeteer.launch({ headless: false, args: ['--lang=en-US,us'] });
+      browser = await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] });
     }
     crawler = createCrawler(parsedUrl, options, browser);
 
