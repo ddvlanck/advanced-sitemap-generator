@@ -1,6 +1,6 @@
 {
-  "_from": "advanced-sitemap-generator@1.5.0",
-  "_id": "advanced-sitemap-generator@1.5.0",
+  "_from": "advanced-sitemap-generator@1.5.1",
+  "_id": "advanced-sitemap-generator@1.5.1",
   "_inBundle": false,
   "_integrity": "sha1-Zoi/OEcL+Yu6zaZF60lukYLxqu4=",
   "_location": "/advanced-sitemap-generator",
@@ -127,5 +127,5 @@
   "scripts": {
     "test": "grunt nodeunit"
   },
-  "version": "1.5.0"
+  "version": "1.5.1"
 }

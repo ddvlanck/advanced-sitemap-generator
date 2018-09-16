@@ -34,7 +34,6 @@ module.exports = function SitemapGenerator(uri, opts) {
     userAgent: 'Node/SitemapGenerator',
     respectRobotsTxt: true,
     ignoreInvalidSSL: true,
-    replaceByCanonical: true,
     recommendAlternatives: false,
     timeout: 120000,
     decodeResponses: true,
@@ -219,7 +218,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       for (let queueItem of queuedItems) {
         //CHECK IF CANONICAL ALREADY IN THE QUEUE
         const canonicalItem = queuedItems.filter((item) => {
-          return queueItem.canonical === item.url;
+          return queueItem.canonical === item.url && queueItem.id !== item.id;
         })[0];
         if (canonicalItem) {
           mergeQueueItems(queueItem, canonicalItem, true);
@@ -325,7 +324,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const init = async () => {
     if (options.deep) {
-      browser = await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] });
+      browser = await puppeteer.launch({ headless: false, args: ['--lang=en-US,us'] });
     }
     crawler = createCrawler(parsedUrl, options, browser);
 
