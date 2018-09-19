@@ -73,7 +73,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     for (const fromAlter of from.alternatives) {
       const isExisted = to.alternatives.filter((item) => {
         return item.urlNormalized === fromAlter.urlNormalized
-           || item.lang === fromAlter.lang;
+          || item.lang === fromAlter.lang;
       }).length;
       if (!isExisted) {
         to.alternatives.push(fromAlter);
@@ -192,7 +192,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
           queueItem.alternatives.push({
             url: otherQueueItem.url,
-            urlNormalized: normalizeUrl(otherQueueItem.url, { normalizeHttps: true }),
+            urlNormalized: normalizeUrl(otherQueueItem.url, { removeTrailingSlash: false, normalizeHttps: true }),
             flushed: false,
             lang: otherQueueItem.lang
           });
@@ -208,7 +208,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
         queueItem.alternatives.push({
           url: queueItem.url,
-          urlNormalized: normalizeUrl(queueItem.url, { normalizeHttps: true }),
+          urlNormalized: normalizeUrl(queueItem.url, { removeTrailingSlash: false, normalizeHttps: true }),
           flushed: false,
           lang: queueItem.lang
         });

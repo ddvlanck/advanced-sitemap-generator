@@ -30,7 +30,7 @@ const guessItemLanguage = (queueItem) => {
 
 const discoverWithCheerio = (buffer, queueItem) => {
 
-  queueItem.urlNormalized = normalizeUrl(queueItem.url, { normalizeHttps: true });
+  queueItem.urlNormalized = normalizeUrl(queueItem.url, { removeTrailingSlash: false, normalizeHttps: true });
   queueItem.plainHTML = buffer.body ? buffer.body : buffer.toString('utf8');
   queueItem.$ = cheerio.load(queueItem.plainHTML);
   queueItem.canonical = '';
@@ -56,14 +56,14 @@ const discoverWithCheerio = (buffer, queueItem) => {
     if (type === 'application/rss+xml') {
       return;
     }
-    if (hreflangUrl !== '' && queueItem.urlNormalized === normalizeUrl(hreflangUrl, { normalizeHttps: true })) {
+    if (hreflangUrl !== '' && queueItem.urlNormalized === normalizeUrl(hreflangUrl, {  removeTrailingSlash: false, normalizeHttps: true })) {
       // Update the original URL by it's main language
       queueItem.lang = hreflang;
     }
     if (typeof hreflang !== typeof undefined && hreflang !== false && hreflangUrl !== '') {
       queueItem.alternatives.push({
         url: hreflangUrl,
-        urlNormalized: normalizeUrl(hreflangUrl, { normalizeHttps: true }),
+        urlNormalized: normalizeUrl(hreflangUrl, { removeTrailingSlash: false,  normalizeHttps: true }),
         flushed: false,
         lang: hreflang
       });
