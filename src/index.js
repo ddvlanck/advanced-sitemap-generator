@@ -117,13 +117,16 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const stop = () => {
-    crawler.stop();
+    if(!crawler.running){
+      msg.error('CRAWLER ALREADY STOPPED');
+      return;
+    }
 
+    crawler.stop();
     setTimeout(() => {
       onCrawlerComplete();
       msg.error('STOPPING THE CRAWLER');
     }, 60000);
-
   };
 
   const queueURL = (url, referrer, force) => {
