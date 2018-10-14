@@ -148,6 +148,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const onCrawlerComplete = () => {
     let queuedItems = getQueueReadyItems();
+    msg.green('CRAWLER HAS ' + queuedItems.length + ' ITEMS IN THE QUEUE');
     const addBaseURLsToQueue = () => {
       msg.info('ADDING BASE URLS TO THE GENERATED SITEMAP');
       for (const url of options.forcedURLs) {
