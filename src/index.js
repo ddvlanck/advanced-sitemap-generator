@@ -149,6 +149,7 @@ module.exports = function SitemapGenerator(uri, opts) {
   const onCrawlerComplete = () => {
     let queuedItems = getQueueReadyItems();
     const addBaseURLsToQueue = () => {
+      msg.info('ADDING BASE URLS TO THE GENERATED SITEMAP');
       for (const url of options.forcedURLs) {
         const item = {
           depth: 100,
@@ -178,6 +179,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       return pureURL;
     };
     const recommendAlternatives = () => {
+      msg.info('RECOMMENDING ALTERNATIVES');
       for (let queueItem of queuedItems) {
         const pureURL = getLangFreeURL(queueItem);
         for (let otherQueueItem of queuedItems) {
@@ -219,6 +221,7 @@ module.exports = function SitemapGenerator(uri, opts) {
     };
 
     const handleCanonicals = () => {
+      msg.info('HANDLING CANONICAL URLS');
       for (let queueItem of queuedItems) {
         //CHECK IF CANONICAL ALREADY IN THE QUEUE
         const canonicalItem = queuedItems.filter((item) => {
@@ -231,6 +234,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
     };
     const handleUppercaseLettersURLs = () => {
+      msg.info('HANDLING SIMILAR URLS BUT WITH DIFFERENT CASE LETTERS');
       for (let queueItem of queuedItems) {
         //CHECK IF CANONICAL ALREADY IN THE QUEUE
         const otherQueueItem = queuedItems.filter((item) => {
@@ -305,6 +309,7 @@ module.exports = function SitemapGenerator(uri, opts) {
       handleCanonicals();
       handleUppercaseLettersURLs();
 
+      msg.info('STARTING WITH ITEMS THAT ARE NOT DELETED');
       queuedItems = queuedItems.filter((item) => {
         return !item.shouldBeDelete;
       });
