@@ -72,8 +72,8 @@ module.exports = function SitemapGenerator(uri, opts) {
     }
     for (const fromAlter of from.alternatives) {
       const isExisted = to.alternatives.filter((item) => {
-        return item.urlNormalized === fromAlter.urlNormalized
-          || item.lang === fromAlter.lang;
+        return item.urlNormalized === fromAlter.urlNormalized ||
+          item.lang === fromAlter.lang;
       }).length;
       if (!isExisted) {
         to.alternatives.push(fromAlter);
@@ -81,11 +81,27 @@ module.exports = function SitemapGenerator(uri, opts) {
     }
   };
   const getStats = () => {
+    let queuedItems = getQueueReadyItems();
+    queuedItems = queuedItems.map((item) => {
+      return {
+        url: item.url,
+        lastMod: item.lastMod,
+        canonical: item.canonical,
+        lang: item.lang,
+        referrer: item.referrer,
+        depth: item.depth,
+        protocol: item.protocol,
+        path: item.path,
+        uriPath: item.uriPath,
+        port: item.port,
+        host: item.host,
+      };
+    });
     const results = {
       added: stats.add || 0,
       ignored: stats.ignore || 0,
       errored: stats.error || 0,
-      urls: getQueueReadyItems(),
+      urls: queuedItems,
       realCrawlingDepth: realCrawlingDepth
     };
     return results;
@@ -117,7 +133,7 @@ module.exports = function SitemapGenerator(uri, opts) {
   };
 
   const stop = () => {
-    if(!crawler.running){
+    if (!crawler.running) {
       msg.error('CRAWLER ALREADY STOPPED');
       return;
     }
@@ -198,7 +214,10 @@ module.exports = function SitemapGenerator(uri, opts) {
           }
           queueItem.alternatives.push({
             url: otherQueueItem.url,
-            urlNormalized: normalizeUrl(otherQueueItem.url, { removeTrailingSlash: false, normalizeHttps: true }),
+            urlNormalized: normalizeUrl(otherQueueItem.url, {
+              removeTrailingSlash: false,
+              normalizeHttps: true
+            }),
             flushed: false,
             lang: otherQueueItem.lang
           });
@@ -214,7 +233,10 @@ module.exports = function SitemapGenerator(uri, opts) {
 
         queueItem.alternatives.push({
           url: queueItem.url,
-          urlNormalized: normalizeUrl(queueItem.url, { removeTrailingSlash: false, normalizeHttps: true }),
+          urlNormalized: normalizeUrl(queueItem.url, {
+            removeTrailingSlash: false,
+            normalizeHttps: true
+          }),
           flushed: false,
           lang: queueItem.lang
         });
@@ -239,8 +261,8 @@ module.exports = function SitemapGenerator(uri, opts) {
       for (let queueItem of queuedItems) {
         //CHECK IF CANONICAL ALREADY IN THE QUEUE
         const otherQueueItem = queuedItems.filter((item) => {
-          return queueItem.url.toLowerCase() === item.url.toLowerCase()
-            && queueItem.id !== item.id;
+          return queueItem.url.toLowerCase() === item.url.toLowerCase() &&
+            queueItem.id !== item.id;
         })[0];
 
         //THERE IS AN UPPER CASE LETTER
@@ -291,8 +313,7 @@ module.exports = function SitemapGenerator(uri, opts) {
               );
             }
           );
-        }
-        else if (sitemaps.length) {
+        } else if (sitemaps.length) {
           savedOnDiskSitemapPaths.push(sitemapPath);
 
           (async () => {
@@ -334,18 +355,35 @@ module.exports = function SitemapGenerator(uri, opts) {
 
   const init = async () => {
     if (options.deep) {
-      browser = await puppeteer.launch({ headless: true, args: ['--lang=en-US,us'] });
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--lang=en-US,us']
+      });
     }
     crawler = createCrawler(parsedUrl, options, browser);
 
-    crawler.on('fetch404', ({ url }) => emitError(404, url));
-    crawler.on('fetchtimeout', ({ url }) => emitError(408, url));
-    crawler.on('fetch410', ({ url }) => emitError(410, url));
-    crawler.on('invaliddomain', ({ url }) => emitError(403, url));
-    crawler.on('fetchprevented', ({ url }) => emitError(403, url));
+    crawler.on('fetch404', ({
+      url
+    }) => emitError(404, url));
+    crawler.on('fetchtimeout', ({
+      url
+    }) => emitError(408, url));
+    crawler.on('fetch410', ({
+      url
+    }) => emitError(410, url));
+    crawler.on('invaliddomain', ({
+      url
+    }) => emitError(403, url));
+    crawler.on('fetchprevented', ({
+      url
+    }) => emitError(403, url));
 
-    crawler.on('queueerror', ({ url }) => emitError(500, url));
-    crawler.on('fetchconditionerror', ({ url }) => emitError(500, url));
+    crawler.on('queueerror', ({
+      url
+    }) => emitError(500, url));
+    crawler.on('fetchconditionerror', ({
+      url
+    }) => emitError(500, url));
 
     crawler.on('fetcherror', (queueItem, response) =>
       emitError(response.statusCode, queueItem.url)
@@ -359,7 +397,9 @@ module.exports = function SitemapGenerator(uri, opts) {
       }
     });
 
-    crawler.on('fetchdisallowed', ({ url }) => emitter.emit('ignore', url));
+    crawler.on('fetchdisallowed', ({
+      url
+    }) => emitter.emit('ignore', url));
 
     crawler.on('queueduplicate', (queueItem) => {
       const items = crawler.queue.filter((item) => {
@@ -381,7 +421,10 @@ module.exports = function SitemapGenerator(uri, opts) {
     });
 
     crawler.on('fetchcomplete', (queueItem, page) => {
-      const { url, depth } = queueItem;
+      const {
+        url,
+        depth
+      } = queueItem;
       // msg.info('FETCH COMPLETE FOR ' + url);
       // check if robots noindex is present
       if (/<meta(?=[^>]+noindex).*?>/.test(page)) {
@@ -395,8 +438,7 @@ module.exports = function SitemapGenerator(uri, opts) {
 
     });
 
-    crawler.on('discoverycomplete', (queueItem, resources) => {
-    });
+    crawler.on('discoverycomplete', (queueItem, resources) => {});
 
     crawler.on('complete', onCrawlerComplete);
     emitter.on('add', (queueItem, page) => {
