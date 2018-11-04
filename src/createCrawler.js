@@ -82,7 +82,8 @@ module.exports = (uri, options = {}, browser) => {
     const isExtAllowed = !queueItem.path.match(extRegex) && !queueItem.path.match(urlRegex);
     const isDomainAllowed = options.filterByDomain ? (referrerQueueItem.host === crawler.host) : true;
 
-    return subPageRestriction && isExtAllowed && isDomainAllowed;
+    const freeAngularMarkup = stringifyURL(queueItem).indexOf('{{') === -1 && stringifyURL(queueItem).indexOf('%7B%7B') === -1;
+    return subPageRestriction && isExtAllowed && isDomainAllowed && freeAngularMarkup;
   };
 
   crawler.addFetchCondition((queueItem, referrerQueueItem, done) => {
