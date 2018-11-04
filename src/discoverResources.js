@@ -151,19 +151,25 @@ const discoverWithCheerio = (buffer, queueItem) => {
       handleAlters();
       return resume();
     }
-    const data = await getHTMLWithHeadlessBrowser(queueItem.url);
-    queueItem.plainHTML = data.body;
-    queueItem.$ = cheerio.load(queueItem.plainHTML);
-    handleAlters();
+    try {
+      const data = await getHTMLWithHeadlessBrowser(queueItem.url);
+      queueItem.plainHTML = data.body;
+      queueItem.$ = cheerio.load(queueItem.plainHTML);
+      handleAlters();
 
-    let resources = links().get();
-    resources = crawler.cleanExpandResources(resources, queueItem);
-    resources.forEach(function(url) {
-      if (crawler.maxDepth === 0 || queueItem.depth + 1 <= crawler.maxDepth) {
-        crawler.queueURL(url, queueItem);
-      }
-    });
-    resume();
+      let resources = links().get();
+      resources = crawler.cleanExpandResources(resources, queueItem);
+      resources.forEach(function(url) {
+        if (crawler.maxDepth === 0 || queueItem.depth + 1 <= crawler.maxDepth) {
+          crawler.queueURL(url, queueItem);
+        }
+      });
+      resume();
+    } catch (ex) {
+      msg.error(ex);
+      resume();
+    }
+
   })();
 
   return links().get();
