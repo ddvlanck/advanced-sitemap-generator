@@ -15,7 +15,9 @@ const guessItemLanguage = (queueItem) => {
     if (lang !== '') {
       resolve(lang);
     } else {
-      cld.detect(html, { isHTML: true }, function(err, result) {
+      cld.detect(html, {
+        isHTML: true
+      }, function(err, result) {
         if (err) {
           reject(err);
         }
@@ -30,7 +32,10 @@ const guessItemLanguage = (queueItem) => {
 
 const discoverWithCheerio = (buffer, queueItem) => {
 
-  queueItem.urlNormalized = normalizeUrl(queueItem.url, { removeTrailingSlash: false, normalizeHttps: true });
+  queueItem.urlNormalized = normalizeUrl(queueItem.url, {
+    removeTrailingSlash: false,
+    normalizeHttps: true
+  });
   queueItem.plainHTML = buffer.body ? buffer.body : buffer.toString('utf8');
   queueItem.$ = cheerio.load(queueItem.plainHTML);
   queueItem.canonical = '';
@@ -56,14 +61,20 @@ const discoverWithCheerio = (buffer, queueItem) => {
     if (type === 'application/rss+xml') {
       return;
     }
-    if (hreflangUrl !== '' && queueItem.urlNormalized === normalizeUrl(hreflangUrl, {  removeTrailingSlash: false, normalizeHttps: true })) {
+    if (hreflangUrl !== '' && queueItem.urlNormalized === normalizeUrl(hreflangUrl, {
+        removeTrailingSlash: false,
+        normalizeHttps: true
+      })) {
       // Update the original URL by it's main language
       queueItem.lang = hreflang;
     }
     if (typeof hreflang !== typeof undefined && hreflang !== false && hreflangUrl !== '') {
       queueItem.alternatives.push({
         url: hreflangUrl,
-        urlNormalized: normalizeUrl(hreflangUrl, { removeTrailingSlash: false,  normalizeHttps: true }),
+        urlNormalized: normalizeUrl(hreflangUrl, {
+          removeTrailingSlash: false,
+          normalizeHttps: true
+        }),
         flushed: false,
         lang: hreflang
       });
@@ -100,8 +111,7 @@ const discoverWithCheerio = (buffer, queueItem) => {
       const rel = $(this).attr('rel');
       if (/nofollow/i.test(rel)) {
         return null;
-      }
-      else if (rel === 'canonical') {
+      } else if (rel === 'canonical') {
         queueItem.canonical = href;
       }
 
@@ -136,9 +146,10 @@ const discoverWithCheerio = (buffer, queueItem) => {
   };
 
   (async () => {
+    const resume = crawler.wait();
     if (!browser) {
       handleAlters();
-      return;
+      return resume();
     }
     const data = await getHTMLWithHeadlessBrowser(queueItem.url);
     queueItem.plainHTML = data.body;
@@ -152,6 +163,7 @@ const discoverWithCheerio = (buffer, queueItem) => {
         crawler.queueURL(url, queueItem);
       }
     });
+    resume();
   })();
 
   return links().get();
@@ -162,7 +174,11 @@ const getHTMLWithHeadlessBrowser = async (url) => {
     'Accept-Language': 'en'
   });
 
-  const result = { url: url, body: '', endURL: url };
+  const result = {
+    url: url,
+    body: '',
+    endURL: url
+  };
   try {
     await page.goto(url, {
       waitLoad: true,
