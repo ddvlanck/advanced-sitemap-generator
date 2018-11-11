@@ -179,7 +179,7 @@ module.exports = function SitemapGenerator(uri, opts) {
         };
         item.alternatives = url.alternatives.map((alter) => {
           alter.url = alter.value;
-          alter.urlNormalized: normalizeUrl(alter.url, {
+          alter.urlNormalized = normalizeUrl(alter.url, {
             removeTrailingSlash: false,
             normalizeHttps: true
           });
