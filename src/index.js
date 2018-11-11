@@ -71,12 +71,25 @@ module.exports = function SitemapGenerator(uri, opts) {
       return;
     }
     for (const fromAlter of from.alternatives) {
-      const isExisted = to.alternatives.filter((item) => {
-        return item.urlNormalized === fromAlter.urlNormalized ||
-          item.lang === fromAlter.lang;
-      }).length;
-      if (!isExisted) {
+      const similarLangAlternatives = to.alternatives.filter((item) => {
+        return item.lang === fromAlter.lang;
+      });
+      const similarURLAlternatives = to.alternatives.filter((item) => {
+        return item.urlNormalized === fromAlter.urlNormalized;
+      });
+
+      if (!similarLangAlternatives.length && !similarURLAlternatives.length) {
         to.alternatives.push(fromAlter);
+      } else if (similarURLAlternatives.length && !similarLangAlternatives.length) {
+        //en and en-US. In this case the more specific lang should be used en-US
+        similarURLAlternatives[0].lang = similarURLAlternatives[0].lang.length > fromAlter.lang.length ? similarURLAlternatives[0].lang : fromAlter.lang;
+      } else if (similarLangAlternatives.length && !similarURLAlternatives.length) {
+        //Same langs detected but diffrent URLs, In this case will always prefer the from's one
+        similarURLAlternatives[0].url = fromAlter.url;
+        similarURLAlternatives[0].urlNormalized = normalizeUrl(fromAlter.url, {
+          removeTrailingSlash: false,
+          normalizeHttps: true
+        });
       }
     }
   };
