@@ -171,10 +171,18 @@ module.exports = function SitemapGenerator(uri, opts) {
         const item = {
           depth: 100,
           lastMod: '',
-          url: url.value
+          url: url.value,
+          urlNormalized: normalizeUrl(url.value, {
+            removeTrailingSlash: false,
+            normalizeHttps: true
+          })
         };
         item.alternatives = url.alternatives.map((alter) => {
           alter.url = alter.value;
+          alter.urlNormalized: normalizeUrl(alter.url, {
+            removeTrailingSlash: false,
+            normalizeHttps: true
+          });
           return alter;
         });
         const existingItem = queuedItems.filter((queueItem) => {
