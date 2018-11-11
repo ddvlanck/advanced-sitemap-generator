@@ -85,8 +85,8 @@ module.exports = function SitemapGenerator(uri, opts) {
         similarURLAlternatives[0].lang = similarURLAlternatives[0].lang.length > fromAlter.lang.length ? similarURLAlternatives[0].lang : fromAlter.lang;
       } else if (similarLangAlternatives.length && !similarURLAlternatives.length) {
         //Same langs detected but diffrent URLs, In this case will always prefer the from's one
-        similarURLAlternatives[0].url = fromAlter.url;
-        similarURLAlternatives[0].urlNormalized = normalizeUrl(fromAlter.url, {
+        similarLangAlternatives[0].url = fromAlter.url;
+        similarLangAlternatives[0].urlNormalized = normalizeUrl(fromAlter.url, {
           removeTrailingSlash: false,
           normalizeHttps: true
         });
