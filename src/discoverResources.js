@@ -34,7 +34,7 @@ const discoverWithCheerio = (buffer, queueItem) => {
 
   queueItem.urlNormalized = normalizeUrl(queueItem.url, {
     removeTrailingSlash: false,
-    normalizeHttps: true
+    forceHttps: true
   });
   queueItem.plainHTML = buffer.body ? buffer.body : buffer.toString('utf8');
   queueItem.$ = cheerio.load(queueItem.plainHTML);
@@ -63,7 +63,7 @@ const discoverWithCheerio = (buffer, queueItem) => {
     }
     if (hreflangUrl !== '' && queueItem.urlNormalized === normalizeUrl(hreflangUrl, {
         removeTrailingSlash: false,
-        normalizeHttps: true
+        forceHttps: true
       })) {
       // Update the original URL by it's main language
       queueItem.lang = hreflang;
@@ -73,7 +73,7 @@ const discoverWithCheerio = (buffer, queueItem) => {
         url: hreflangUrl,
         urlNormalized: normalizeUrl(hreflangUrl, {
           removeTrailingSlash: false,
-          normalizeHttps: true
+          forceHttps: true
         }),
         flushed: false,
         lang: hreflang

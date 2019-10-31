@@ -88,7 +88,7 @@ module.exports = function SitemapGenerator(uri, opts) {
         similarLangAlternatives[0].url = fromAlter.url;
         similarLangAlternatives[0].urlNormalized = normalizeUrl(fromAlter.url, {
           removeTrailingSlash: false,
-          normalizeHttps: true
+          forceHttps: true
         });
       }
     }
@@ -187,14 +187,14 @@ module.exports = function SitemapGenerator(uri, opts) {
           url: url.value,
           urlNormalized: normalizeUrl(url.value, {
             removeTrailingSlash: false,
-            normalizeHttps: true
+            forceHttps: true
           })
         };
         item.alternatives = url.alternatives.map((alter) => {
           alter.url = alter.value;
           alter.urlNormalized = normalizeUrl(alter.url, {
             removeTrailingSlash: false,
-            normalizeHttps: true
+            forceHttps: true
           });
           return alter;
         });
@@ -237,7 +237,7 @@ module.exports = function SitemapGenerator(uri, opts) {
             url: otherQueueItem.url,
             urlNormalized: normalizeUrl(otherQueueItem.url, {
               removeTrailingSlash: false,
-              normalizeHttps: true
+              forceHttps: true
             }),
             flushed: false,
             lang: otherQueueItem.lang
@@ -256,7 +256,7 @@ module.exports = function SitemapGenerator(uri, opts) {
           url: queueItem.url,
           urlNormalized: normalizeUrl(queueItem.url, {
             removeTrailingSlash: false,
-            normalizeHttps: true
+            forceHttps: true
           }),
           flushed: false,
           lang: queueItem.lang
