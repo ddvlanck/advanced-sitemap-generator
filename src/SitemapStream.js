@@ -6,7 +6,7 @@ const escapeUnsafe = require('./helpers/escapeUnsafe');
 const msg = require('./helpers/msg-helper');
 
 module.exports = function SitemapStream() {
-  const tmpPath = path.join(os.tmpdir(), `sitemap_${rand(10)}`);
+  const tmpPath = path.join(os.tmpdir(), `sitemap_${rand({length: 10})}`);
   msg.info('USING TMP PATH TO SAVE SITEMAP: ' + tmpPath);
 
   const stream = fs.createWriteStream(tmpPath);
