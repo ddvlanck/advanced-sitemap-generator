@@ -46,14 +46,14 @@ module.exports = function SitemapStream() {
     const escapedUrl = escapeUnsafe(queueItem.url);
 
     stream.write(`\n  <url>\n    <loc>${escapedUrl}</loc>`);
-    for (let alternativeUrl of queueItem.alternatives) {
+    /*for (let alternativeUrl of queueItem.alternatives) {
       // Skip self refrence alternative URL
       // if(alternativeUrl.value === url.value){
       //   continue;
       // }
       stream.write(`\n    <xhtml:link rel='alternate' hreflang='` + alternativeUrl.lang +
         `' href='` + escapeUnsafe(alternativeUrl.url) + `' />`);
-    }
+    }*/
     stream.write(`\n    <changefreq>daily</changefreq>`);
     stream.write(`\n    <priority>` + getPiriorityFromDepth(queueItem.depth) + `</priority>`);
     stream.write(`\n    <lastmod>` + queueItem.lastMod + `</lastmod>`);

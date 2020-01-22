@@ -58,10 +58,10 @@ module.exports = function SitemapGenerator(uri, opts) {
     error: 0
   };
   const getQueueReadyItems = () => {
-    const items = crawler.queue.filter((item) => {
+    /*const items = crawler.queue.filter((item) => {
       return item.visited && item.isDiscoveryProcessDone && item.fetched === true;
-    });
-    return items;
+    });*/
+    return crawler.queue;
   };
   const mergeQueueItems = (from, to, deep) => {
     to.depth = to.depth > from.depth ? from.depth : to.depth;
@@ -190,14 +190,14 @@ module.exports = function SitemapGenerator(uri, opts) {
             forceHttps: true
           })
         };
-        item.alternatives = url.alternatives.map((alter) => {
+        /*item.alternatives = url.alternatives.map((alter) => {
           alter.url = alter.value;
           alter.urlNormalized = normalizeUrl(alter.url, {
             removeTrailingSlash: false,
             forceHttps: true
           });
           return alter;
-        });
+        });*/
         const existingItem = queuedItems.filter((queueItem) => {
           return item.url === queueItem.url;
         })[0];
