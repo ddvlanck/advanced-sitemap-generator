@@ -1,4 +1,4 @@
-NOTE: in this fork, some functionality was disabled in order to get the desired output for the website https://data.vlaanderen.be . Please use the original package for your own website.
+NOTE: Some functionality was disabled in order to get the desired output for the website https://data.vlaanderen.be . Please use the original package for your own website.
 
 # Sitemap Generator
 
