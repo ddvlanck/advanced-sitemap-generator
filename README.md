@@ -1,3 +1,5 @@
+NOTE: in this fork, some functionality was disabled in order to get the desired output for the website https://data.vlaanderen.be . Please use the original package for your own website.
+
 # Sitemap Generator
 
 [![Travis](https://img.shields.io/travis/lgraubner/sitemap-generator.svg)](https://travis-ci.org/lgraubner/sitemap-generator) [![David](https://img.shields.io/david/lgraubner/sitemap-generator.svg)](https://david-dm.org/lgraubner/sitemap-generator) [![npm](https://img.shields.io/npm/v/sitemap-generator.svg)](https://www.npmjs.com/package/sitemap-generator)
